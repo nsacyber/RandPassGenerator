@@ -13,7 +13,7 @@ The RandPassGenerator can also run from a terminal or console. The command-line 
 
 	java -jar RandPassGenerator.jar  [options]
 
-The following common options are accepted:
+### Options
 
 -v	  {Print verbose messages during operation, in addition to logging}
 
@@ -42,6 +42,16 @@ Unusual options:
 -c N 	    {Format output passwords and keys in chunks of N characters}
 
 -sep S    {For chunk formatting, use S as the separator (default: -)}
+
+At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
+
+Detailed log messages are appended to the specified log file - if the log file cannot be opened, then the tool will not run. 
+
+The option -randfile can be used to load additional entropy from a file. By default, the tool will attempt to save DRBG output to that file before exiting, so that the next run of the tool can benefit from the entropy gathered for this run. If the file cannot be written to, a message will be logged, but it isn't a fatal error.
+
+ Note that the -pwcs option is a little strange. Each character in the value represents a full set of characters. Any lowercase letter
+ means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means 
+"add a set of all digits", and anything else means "add a set of all punctuation marks". There is no way to supply a fully custom character set. Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
 
 
 ## License
