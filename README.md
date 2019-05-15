@@ -54,6 +54,43 @@ The option -randfile can be used to load additional entropy from a file. By defa
 "add a set of all digits", and anything else means "add a set of all punctuation marks". There is no way to supply a fully custom character set. Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
 
 
+### Examples
+
+Example 1: generate 5 random passwords using the default mixed character set, at default strength of 160, saved into file GoodPasswords.dat
+ 
+	java -jar RandPassGenerator.jar -pw 5 >GoodPasswords.dat
+
+Example 2: generate 20 random passphrases using the default dictionary, at strength of 256, with verbose messages, using words up to 9 letters long, and output saved into the file passphrases.txt
+
+	java -jar RandPassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
+
+Example 3: generate 200 random keys at strength of 192, with logging to keygen.log, and output to mykeys.out.
+
+	java -jar RandPassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
+
+Example 4: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
+    
+	java -jar RandPassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+
+Example 5: generate 10 passwords at strength 128, formatted into chunks of five characters each, separated by /.
+
+	java -jar RandPassGenerator.jar -pw 10 -str 128 -c 5 -sep /
+	
+### Design Information
+
+The foundation of RandPassGenerator is an implementation of the NIST SP800-90 HashDRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output. The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation. This implementation uses the seed mechanism of the Java SecureRandom class for gathering entropy. By default, it also saves entropy from run to run.
+
+This implementation performs self-tests at every execution, so that users can be confident that no library problems have affected operation. Two kinds of self-tests are performed:
+1. Known-answer tests from the NIST Hash_DRBG verification suite test file.
+2. Simple statistical tests on DRBG output.
+
+If the tests don't pass, the tool reports failure and refuses to run. 
+
+The strength mechanism implemented here is quite simple. For passwords, the size of the character set used defines the 
+bits-per-character, and password length is then computed to meet or exceed the requested strength (typically, this is somewhere around 5-6 bits per character). Similarly, for passphrases the size of the usable dictionary defines the bits-per-word, and passphrase length is then computed to meet or exceed the requested strength (for the default dictionary and settings, roughly 16 bits-per-word). Duplicates are eliminated and the entropy is computed based on the number of unique characters or words. 
+
+The RandPassGenerator tool performs extensive logging. By default, log entries are appended to the local file "randpass.log". No actual key data, random data, or seed data is written to the log file.
+
 ## License
 
 See [LICENSE](./LICENSE.md).
