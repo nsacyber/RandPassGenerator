@@ -16,20 +16,31 @@ The RandPassGenerator can also run from a terminal or console. The command-line 
 The following common options are accepted:
 
 -v	    Print verbose messages during operation, in addition to logging
+
 -str S  Use generation strength of S bits (default: 160)
+
 -pw N	  Generate N random password of the specified strength
+
 -pp N	  Generate N random passphrases of the specified strength
+
 -k N	  Generate N random keys of the specified strength
 
 Unusual options:
   
 -pplen M  When generating passphrases, longest word should be M letters long (minimum value of M is 3)
+
 -ppurl U  Use the URL U to load words for passphrase (default: use internal list)
+
 -pwcs P   Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)
+
 -log F    Log all operations to the log file F (default: ./randpass.log)
+
 -randfile F  Use file F for reading saved entropy on startup, and saving entropy on finish (default: randpass-extra-entropy.dat)
+
 -out F    Write output to file F (default: writes to stdout)
+
 -c N 	    Format output passwords and keys in chunks of N characters
+
 -sep S    For chunk formatting, use S as the separator (default: -)
 
 
