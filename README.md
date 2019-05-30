@@ -58,23 +58,23 @@ The option -randfile can be used to load additional entropy from a file. By defa
 
 Example 1: generate 5 random passwords using the default mixed character set, at default strength of 160, saved into file GoodPasswords.dat
  
-	java -jar RandPassGenerator.jar -pw 5 >GoodPasswords.dat
+	java -jar PassGenerator.jar -pw 5 >GoodPasswords.dat
 
 Example 2: generate 20 random passphrases using the default dictionary, at strength of 256, with verbose messages, using words up to 9 letters long, and output saved into the file passphrases.txt
 
-	java -jar RandPassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
+	java -jar PassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
 
 Example 3: generate 200 random keys at strength of 192, with logging to keygen.log, and output to mykeys.out.
 
-	java -jar RandPassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
+	java -jar PassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
 
 Example 4: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
     
-	java -jar RandPassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+	java -jar PassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
 
 Example 5: generate 10 passwords at strength 128, formatted into chunks of five characters each, separated by /.
 
-	java -jar RandPassGenerator.jar -pw 10 -str 128 -c 5 -sep /
+	java -jar PassGenerator.jar -pw 10 -str 128 -c 5 -sep /
 	
 ### Design Information
 
