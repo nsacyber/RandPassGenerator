@@ -1,0 +1,115 @@
+
+CHANGES FROM 1.0.1  TO  1.1.0
+
+
+* Added static method to AbstractDRBG to correctly convert from an unsigned
+  Java BigInteger to a byte array. 
+Then applied this method everywhere.
+  Also changed construction of all BigIntegers to ensure they were created
+  as unsigned when being constructed from a byte array.
+
+
+* Added code to CharacterSet class to count entropy based on unique characters
+  in the set.  This allows for a passwords with correct strength even if the
+  CharacterSet has repeated characters.
+
+
+* Added code to CharacterSet to reset the internal random number buffer when
+  character set is rebuilt.  This was unnecessary, since the buffer 16-bit 
+  integer contents are independent of character set, but the reviewers specified
+  it should be done.
+
+
+* Added code to the WordSet class to remove duplicate words while loading the
+  words from the source URL or internal list.  This ensures passphrases of
+  correct strength even if the input had redundant words.
+
+
+* Disabled re-use of self-test entropy with the HashDRBG (code in the RandManager
+  class).  This is based on reviewers' interpretation of SP800-90A sect 11.3.2
+  prohibiting re-use of self-test entropy in any form.  My own interpretation
+  of 11.3.2 is different, but in deference to the reviewers RandManager now
+  discards perfectly good system entropy rather than add it to the Nonce.
+
+
+* Added code to HashDRBG class to check for minimum entropy input size, for better
+  conformance to SP800-90, in instantiate() and reseed().
+
+
+* Added logging to HashDRBG class to record the entropy source being used, after
+  the source passes self-test.
+
+
+* Added code to the toString method of the JavaSecRandEntropySource to include
+  some info about the underlying Java SecureRandom objects, to aid with logging.
+
+* Added new option to write key/passwd/passphrase output to a named file.  This
+  was also unnecessary, since stdout redirection can do the same thing, but
+  it is a pretty common convention for command line utilities.
+
+
+* Added README.txt file with examples.
+
+
+
+
+CHANGES FROM  1.1.0  TO  1.1.2
+
+
+* Added new class FixedValuesEntropySource to support known answer testing.
+  This class is used to supply specific values of entropy input to drive tests.
+
+
+* Added new class HashDRBGKnownAnswerTest to support known answer testing.
+
+
+* Added code to the HashDRBG class to support known answer testing, and fixed
+  several small buffer size bugs that prevented getting the known answers.
+
+
+* Added two specific NIST known answer tests, one for SHA-256 and one for
+  SHA-384.
+
+
+* Added code to the RandManager startup to ensure that the HashDRBG known
+  answer tests were invoked and passed before using the HashDRBG.
+
+
+* Fixed interpretation of the strength values in the HashDRBG class and
+  elsewhere to conform more closely to SP800-90/57/107  [NOTE: while nominal
+  'strength' of SHA-384 is 192 bits, that is based on the collision resistance,
+  but for the HashDRBG key generation use case, the 'strength' should be
+  taken from the pre-image resistance, with is nominally 384 bits.  So, we
+  allow the HashDRBG built on SHA-384 to generate keys with strength up to
+  384 bits.]
+
+
+* Added more examples to README.txt file.
+
+CHANGES FROM  1.1.2  TO  1.1.3
+
+
+* Added formatting options to permit more readable output formatting of
+  hex keys and passwords.
+
+
+
+CHANGES FROM  1.1.3  to  1.1.4
+
+
+* Enforced de-duped character set for all operations, including
+  generation, in gen/CharacterSet.java, i.a.w. recommendations from
+  the reviewers.
+  
+
+* Minor changes to README.txt file.
+
+
+
+CHANGES FROM  1.1.4  to  1.1.5
+* Added code to HexKeyGen class to enable key generation error messages to print to command line
+* Added code to RandPassGenerator class to enable error messages to print to command line without verbose '-v' command
+* Added code to CharacterSet class to enable password generation error message to print to command line for 0 or negative strength values
+* Added code to WordSet class to enable passphrase generation error message to print to command line for 0 or negative strength values
+* Minor changes to README.txt file.
+
