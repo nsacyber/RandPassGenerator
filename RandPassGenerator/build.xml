@@ -1,0 +1,30 @@
+<project>
+
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="build/jar"/>
+        <mkdir dir="build/data"/>
+	<copy file="data/wordlist.txt" todir="build/data" />
+        <jar destfile="build/jar/PassGenerator.jar" basedir="build/classes">
+            <fileset dir="build/classes"/>
+            <fileset dir="build/data"/>
+            <manifest>
+                <attribute name="Main-Class" value="gov.nsa.ia.pass.RandPassGenerator"/> 
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="build/jar/PassGenerator.jar" fork="true"/>
+    </target>
+
+</project>
+
