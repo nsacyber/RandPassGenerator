@@ -15,6 +15,7 @@ import gov.nsa.ia.util.*;
  * output.  If the caller needs this, they must do it separately.
  *
  * @author nziring
+ * Updated by amsagos
  */
 
 public class HexKeyGen {
