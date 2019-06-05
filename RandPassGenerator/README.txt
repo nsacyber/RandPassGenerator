@@ -25,7 +25,7 @@ Common options:
   
 -k N	   Generate N random keys of the specified strength
  
--enc	   Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar RandPassGenerator.jar -pw 1 -str 96" will generate a 16 character password).
+-enc	   Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar RandPassGenerator.jar -pw 1 -str 96" will generate a 16 character password).
 
 -decrypt   Decrypt encrypted key file using a random password that is at least a 16 characters and save as text file (KEY_ID_decrypted.txt). A prompt for the name of the encrypted file to decrypt will appear, then a prompt for the random password to use will appear. 
 
@@ -85,7 +85,7 @@ Example 7: Decrypt encrypted key file.  java -jar RandPassGenerator.jar -decrypt
 
 DESIGN INFORMATION
 
-The foundation of RandPassGenerator is an implemention of the NIST SP800-90 HashDRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output.  The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation.
+The foundation of RandPassGenerator is an implementation of the NIST SP800-90 HashDRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output.  The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation.
  
 This implementation uses the seed mechanism of the Java SecureRandom class for gathering entropy. This implementation performs self-tests at every execution, so that users can be confident that no library problems have affected operation. Two kinds of self-tests are performed:
     
