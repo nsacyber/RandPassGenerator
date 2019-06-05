@@ -211,11 +211,12 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	     ret = (ret << 8) | rand_bytes[i];
 	 }
 
-	 return new Integer(ret);
+	 //return new Integer(ret);
+	 return Integer.valueOf(ret);
     }
 
 
-    /**
+    	/**
 	 * Return the name of this DRBG.
 	 */
 	public String getName() { return name; }
@@ -293,7 +294,7 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 */
         protected static final byte [] pbi2ba(java.math.BigInteger bi) {
    	    byte [] tmp;
-	    int offset;
+	    //int offset;
 
 	    tmp = bi.toByteArray();
 
