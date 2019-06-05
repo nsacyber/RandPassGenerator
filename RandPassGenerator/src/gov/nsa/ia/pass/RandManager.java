@@ -3,7 +3,7 @@ package gov.nsa.ia.pass;
 import gov.nsa.ia.drbg.*;
 import gov.nsa.ia.util.*;
 
-import java.io.*;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +50,7 @@ import java.util.logging.Logger;
  * and the utility method getKeyGenerationShutdownHook().
  * 
  * @author nziring
+ * Updated 09252018 by amsagos
  */
 public class RandManager implements SelfTestable {
     /**
@@ -99,12 +100,12 @@ public class RandManager implements SelfTestable {
 
     private EntropySource primarySource;
     private EntropySource suppSource;
-    private FileEntropySource startupSource;
+    private EntropySource startupSource;
     private HashDRBG rbg;
     private boolean okay;
     private String name;
     private Logger log;
-    private long lastSupplementTime;
+    //private long lastSupplementTime;
 	
     /**
      * Constructor - create a KeyGenerationManager object.
@@ -165,22 +166,22 @@ public class RandManager implements SelfTestable {
      * (2) call uninstantiate on our DRBG, and
      * (3) call dispose on all our entropy sources.
      */
-    public  void shutdown() {
+   public  void shutdown() {
 	// step 1
-	if (okay && (rbg != null) && (startupSource != null)) {
-	    try {
-		if (startupSource.saveEntropy(rbg, SAVE_BLOCKS)) {
-		    log.info("In RandManager " + name + " shutdown, saved entropy to " +
-			     startupSource.getDestination());
-		} else {
-		    log.warning("In RandManager " + name + ", attempt to save entropy failed.");
-		}
-	    } catch(IOException ie) {
-		log.warning("Saving entropy to file failed: " + ie);
-	    }
-	} else {
-	    log.warning("In shutdown, unable to save entropy to file.");
-	}
+	//if (okay && (rbg != null) && (startupSource != null)) {
+	  //  try {
+		//if (startupSource.saveEntropy(rbg, SAVE_BLOCKS)) {
+		//    log.info("In RandManager " + name + " shutdown, saved entropy to " +
+		//	     startupSource.getDestination());
+		//} else {
+		//    log.warning("In RandManager " + name + ", attempt to save entropy failed.");
+		//}
+	   // } catch(IOException ie) {
+		//log.warning("Saving entropy to file failed: " + ie);
+	  //  }
+	//} else {
+	 //   log.warning("In shutdown, unable to save entropy to file.");
+	//}
 		
 	// step 2
 	if (rbg != null && rbg.isOkay()) {
@@ -265,7 +266,8 @@ public class RandManager implements SelfTestable {
      * 
      * @param src A FileEntropySource that can support saveEntropy()
      */
-    public  void setStartupSource(FileEntropySource src) {
+    //public  void setStartupSource(FileEntropySource src) {
+    public  void setStartupSource(EntropySource src) {
 	if (src == startupSource) return;	
 	if (startupSource != null) {
 	    startupSource.dispose();
@@ -312,16 +314,17 @@ public class RandManager implements SelfTestable {
 	}
 		
 	// attempt to grab DRBG nonce from startupSource if possible, or system time otherwise
+	// 1.2 UPDATE: See note in RandPassGenerator line 147.
 	if (startupSource != null) {
 	    nonce = startupSource.getEntropy(STARTUP_SOURCE_ENTROPY, 8, 256);
 	    if (nonce != null && nonce.length > 0) {
-		log.fine("Got startup entropy nonce from " + startupSource.getDestination() + ", " +
-			 nonce.length + " bytes.");
+		//log.fine("Got startup entropy nonce from " + startupSource.getDestination() + ", " + nonce.length + " bytes.");
+	    log.fine("Got startup entropy nonce from " + "primarySource" + ", " + nonce.length + " bytes.");
 	    }
 	}
 	if (nonce == null) {
 	    nonce = (System.currentTimeMillis() + "x").getBytes();
-	    log.fine("Got startup entropy nonce from system time.");
+	 log.fine("Got startup entropy nonce from system time."+ ", " + nonce.length + " bytes.");
 	}
 		
 	// append self-test entropy from the primary source to the nonce, 
