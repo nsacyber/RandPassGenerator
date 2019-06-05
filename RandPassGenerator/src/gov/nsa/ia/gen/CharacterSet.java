@@ -32,6 +32,7 @@ import gov.nsa.ia.util.*;
  *   useful in some contexts, but this class will make them.
  *
  * @author Neal Ziring
+ * Updated by amsagos
  */
 
 public class CharacterSet {
@@ -239,7 +240,8 @@ public class CharacterSet {
 	} while (sval >= rlim);
 	sval = sval % max;
 
-	return new Short((short)(sval & 0x7fff));
+	//return new Short((short)(sval & 0x7fff));
+	return Short.valueOf((short)(sval & 0x7fff));
     }
 
     private static final int BUFFER_FILL_SIZE = 24;
