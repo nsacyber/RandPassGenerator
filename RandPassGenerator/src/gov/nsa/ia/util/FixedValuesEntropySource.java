@@ -91,7 +91,7 @@ public class FixedValuesEntropySource implements EntropySource {
      */
     protected static final byte [] pbi2ba(java.math.BigInteger bi) {
 	byte [] tmp;
-	int offset;
+	//int offset;
 
 	tmp = bi.toByteArray();
 
