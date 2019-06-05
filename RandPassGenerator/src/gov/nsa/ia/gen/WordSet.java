@@ -27,6 +27,7 @@ import gov.nsa.ia.util.*;
  * than minimum possible.
  *
  * @author nziring
+ * Updated by amsagos
  */
 
 public class WordSet {
@@ -41,8 +42,8 @@ public class WordSet {
     // private state for instances of this class
     private ArrayList<String> basewords;
     private ArrayList<String> currentSet;
-    private int minLength;
-    private int maxLength;
+    //private int minLength;
+    //private int maxLength;
     private int rlimit;
     private Logger logger;
 
@@ -146,8 +147,8 @@ public class WordSet {
 	if (maxlen < 2) throw new IllegalArgumentException("Maximum length must be > 1");
 	if (minlen >= maxlen) throw new IllegalArgumentException("Maximum length must be greater than minimum length");
 
-	minLength = minlen;
-	maxLength = maxlen;
+	//minLength = minlen;
+	//maxLength = maxlen;
 	currentSet = new ArrayList<String>();
 	cnt = 0;
 	for(String s: basewords) {
