@@ -444,7 +444,7 @@ public class Hash implements DRBGConstants, SelfTestable {
 
         private static byte [] pbi2ba(java.math.BigInteger bi) {
    	    byte [] tmp;
-	    int offset;
+	    //int offset;
 
 	    tmp = bi.toByteArray();
 
