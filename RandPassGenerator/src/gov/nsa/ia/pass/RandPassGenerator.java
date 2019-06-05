@@ -2,9 +2,13 @@ package gov.nsa.ia.pass;
 
 import java.util.*;
 import java.util.logging.*;
-import java.net.URL;
-import java.io.*;
 
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.io.*;
 import gov.nsa.ia.drbg.*;
 import gov.nsa.ia.gen.*;
 import gov.nsa.ia.util.*;
@@ -22,19 +26,20 @@ import gov.nsa.ia.util.*;
  * Run it with no arguments at all to get a usage message.
  *
  * @author nziring
- * Updated 09202017 by amsagos
+ * Updated 09252018 by amsagos
  */
 
 public class RandPassGenerator {
     /**
      * Version string
      */
-    public static final String VERSION = "RandPassGen 1.1.5 - 20 Sep 2017";
+    public static final String VERSION = "RandPassGen 1.3 - 1 Oct 2018";
 
     /**
      * Path of the default log file
      */
     public static final String DEFAULT_LOGFILE = "randpass.log";
+    public static final String DEFAULT_KEYLOGFILE = "randpassGenKeys.log";
 
     /**
      * Default strength of keys to generate, in bits.  (Note that this is
@@ -62,17 +67,20 @@ public class RandPassGenerator {
      * Default separator string to use if employing chunk formatting
      */
     public static final String DEFAULT_CHUNK_SEPARATOR = "-";
+    
 
-    private Logger  logger;
+    private Logger logger;
+    private Logger KeyLogger;
     private RandManager randman;
     boolean verbose;
     private PrintWriter outputWriter;
+    boolean enc;
 
     // extra formatting
     private boolean useChunking = false;
     private int chunkSize = 0;
     private String chunkSep = null;
-
+    
     /**
      * Print an error message to stderr
      */
@@ -92,17 +100,23 @@ public class RandPassGenerator {
     Logger getLogger() {
 	return logger;
     }
+    
+    /**
+     * Return the Key Logger we are using.
+     */
+    Logger getKeyLogger() {
+	return KeyLogger;
+    }
 
     /**
      * Initialize this RandPassGenerator using the supplied log file
      * and the supplied entropy startup file.
      * 
      * @param logfile Path to a writeable log file, null to log to stderr
-     * @param entfile Path to an entropy startup-and-save file, may not be null
      * @param pw A usable printwriter for output, may not be null
      * @param verbose if true, print verbose messages
      */
-    public RandPassGenerator(String logfile, String entfile, PrintWriter pw, boolean verbose) {
+    public RandPassGenerator(String logfile, PrintWriter pw, boolean verbose) {
 	boolean die = false;
 	
 	this.verbose = verbose;
@@ -119,10 +133,26 @@ public class RandPassGenerator {
 		logger.warning("RandPassGenerator - could not open log output file " + logfile + " - all logging to console.");
 	    }
 	}
+	
+	//
+	KeyLogger = Logger.getLogger("RandPassGenKeys-log");
+	if (DEFAULT_KEYLOGFILE != null) {
+	    FileHandler fh = null;
+	    try {
+		fh = new FileHandler(DEFAULT_KEYLOGFILE);
+		fh.setFormatter(new SimpleFormatter());
+		KeyLogger.setLevel(Level.FINE);
+		KeyLogger.addHandler(fh);
+		KeyLogger.setUseParentHandlers(false);
+	    } catch (IOException ie) {
+	    KeyLogger.warning("RandPassGenerator - could not open key log output file " + DEFAULT_KEYLOGFILE + " - all logging to console.");
+	    }
+	}
 
 	// log that we've started up
 	logger.info("RandPassGenerator - starting operation of " + VERSION);
-
+	KeyLogger.info("RandPassGenKeyGenerationLog - starting operation of " + VERSION);
+	
 	// set the output writer
 	if (pw == null) {
 	    logger.severe("RandPassGenerator - no output writer supplied, exiting.");
@@ -135,14 +165,20 @@ public class RandPassGenerator {
 
 	// add primary source to RandManager
 	EntropySource primarysrc = null;
-	FileEntropySource startupsrc = null;
-
+	//FileEntropySource startupsrc = null;
+	
 	try {
-	    startupsrc = new FileEntropySource(entfile, 8, 4);
-	    primarysrc = new JavaSecRandEntropySource();
+	    //startupsrc = new FileEntropySource(entfile, 8, 4);
+		primarysrc = new JavaSecRandEntropySource();
 	    
 	    randman.setPrimarySource(primarysrc);
-	    randman.setStartupSource(startupsrc);
+	    
+	    // 1.2 UPDATE: SP800-90A 8.6.7 states nonce should be a random value with at least (security_strength/2) bits of entropy. 
+	    // The value could be acquired from the same source and at the same time as the entropy input (primarySource). Instead of saving entropy to a 
+	    // file during shutdown for later use as the nonce entropy source or using the system time when an entropy file doens't exist, use same entropy source
+	    // as primary entropy input for the DRBG seed. Also removes any concerns about saving entropy used for the DRBG seed on the system. 
+	    //randman.setStartupSource(startupsrc);
+	    randman.setStartupSource(primarysrc);
 
 	    logger.info("RandPassGen - created randomness manager, about to initialize and perform self-test");
 
@@ -190,8 +226,8 @@ public class RandPassGenerator {
 	    randman = null;
 	}
     }
-
-
+    
+   
     /** 
      * Utility function for making passwords or hex keys easier to read
      * by adding in separators every so many characters.  This method 
@@ -421,9 +457,10 @@ public class RandPassGenerator {
      *
      * @param count  how many keys to generate, positive
      * @param strength key strength in bits, usually 128, 160, or 256
+     * @param enc 
      * @return number of passphrases generated, or -1 on error.
      */
-    public int generateKeys(int count, int strength) {
+    public int generateKeys(int count, int strength, boolean enc) {
 	HexKeyGen kg;
 	AbstractDRBG drbg;
 
@@ -452,31 +489,132 @@ public class RandPassGenerator {
 	int i;
 	String rawkey;
 	ArrayList<String> keys = new ArrayList<String>(count);
+	ArrayList<String> hkeys = new ArrayList<String>(count);
+	
+	
 	for(i = 0; i < count; i++) {
 	    rawkey = kg.generateKey(strength, drbg);
 	    if (rawkey == null) {
-		logger.warning("RandPassGen - hex key generator failed!  Error.");
-		return -1;
+			logger.warning("RandPassGen - hex key generator failed!  Error.");
+			return -1;
 	    } else {
-		keys.add(rawkey);
+			keys.add(rawkey);
+			
+			//hash the generated keys to use for KEY_ID and add to the key generation transaction log
+			MessageDigest messageDigest;
+			try {
+				messageDigest = MessageDigest.getInstance("SHA-384");
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				throw new RuntimeException("Algorithm not installed.");
+			}
+			messageDigest.update(rawkey.getBytes());
+			byte[] hk = messageDigest.digest(rawkey.getBytes(StandardCharsets.UTF_8));
+			hkeys.add(bytesToHex(hk)); 
 	    }
 	}
 
+	String keyfilename = null;
+	
 	logger.info("RandPassGen - generated " + keys.size() + " keys at strength " + strength);
-
+	int a = 0;
 	for(String p: keys) {
 	    if (useChunking) {
-		outputWriter.println(formatWithSeparators(p, chunkSize, chunkSep));
+			outputWriter.println(formatWithSeparators(p, chunkSize, chunkSep));
+			//print key ID
+			outputWriter.println("Key ID:");
+			outputWriter.println(KeyIDGen(hkeys).get(a));
+			//print to key generation transaction log
+			KeyLogger.fine(KeyIDGen(hkeys).get(a));		
+			keyfilename = KeyIDGen(hkeys).get(a);
+			a++;
+			if (enc) {
+				Encryptfile(keyfilename, p);
+			}	
 	    } else {
-		outputWriter.println(p);
-	    }
+			outputWriter.println(p);
+			//print key ID
+			outputWriter.println("Key ID:");
+			outputWriter.println(KeyIDGen(hkeys).get(a));
+			//print to key generation transaction log
+			KeyLogger.fine(KeyIDGen(hkeys).get(a));
+			
+			keyfilename = KeyIDGen(hkeys).get(a);
+			a++;
+			if (enc) 
+				Encryptfile(keyfilename, p);
+		    }	    
 	}
+	
 	outputWriter.flush();
 	logger.info("RandPassGen - output keys to designated output channel");
 
 	return keys.size();
     }
+     
+    /**
+     * Key File Encryption Prompt.
+     * Encrypts generated key to a file using user inputed random password
+     */
+    public static void Encryptfile(String keyfilename, String input) {
+    	File encryptedFile = new File(keyfilename + ".enc");
+    	Console br = System.console();
+    	System.out.print("Provide a random password of at least 16 characters: ");  
+    	// Get the password from user.
+    	char[] pass = null;
+		pass = br.readPassword();
+		KeyWrapper.fileProcessor(pass, input, encryptedFile);
+    }
+    
+    /**
+     * Key File Decryption Prompt.
+     * Decrypts user provided file using user provided password
+     */
+    public static void decryptPrompt() {
+	   
+	    Scanner scanner = new Scanner (System.in);
+	    System.out.print("Provide the name of the encrypted file to decrypt: ");  
+	    String filename = scanner.next(); // Get what the user types.
+	    
+	    File encryptedFile = new File(filename);
+	    
+	    System.out.print("Provide the random encryption password: ");  
+	    String ek = scanner.next(); // Get what the user types.
+	    scanner.close();
+	    //decrypt key file
+	    File decryptedFile = new File(encryptedFile + "_decrypted.txt");
+		KeyUnwrapper.fileProcessor(ek, encryptedFile, decryptedFile);  
+    }
 
+    /**
+     * Key ID Generator.
+     * Generates KeyID of key using first 64-bits of Hash and current date (YYYYMMDD_hhmmssH1H2H3H4H5H6H7H8H9H10H11H12H13H14H15H16).
+     */
+    private static ArrayList<String> KeyIDGen(ArrayList<String> hkeys) {
+	
+	ArrayList<String> fhkeys = new ArrayList<String>();
+		
+	for(String hhk: hkeys) {		
+		String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+		ArrayList<String> ts = new ArrayList<String>();
+		ts.add(timestamp);
+		fhkeys.add(ts.get(0)+hhk.substring(0,16));
+	}
+	return fhkeys;
+	}
+    
+    /**
+     * Byte to Hex converter.
+     */
+    private static String bytesToHex(byte[] hash) {
+    StringBuffer hexString = new StringBuffer();
+    for (int i = 0; i < hash.length; i++) {
+       String hex = Integer.toHexString(0xff & hash[i]);
+       if(hex.length() == 1) hexString.append('0');
+           hexString.append(hex);
+    }
+    return hexString.toString();
+    }
 
     /**
      * Set up the options manager for this RandPassGenerator.
@@ -488,7 +626,7 @@ public class RandPassGenerator {
 	ret.addOption("logfile", "Path to log file", true, "-log", DEFAULT_LOGFILE);
 	ret.addOption("strength", "Bit strength of keys/passes to generate", true, "-str", "" + DEFAULT_STRENGTH);
 	ret.addAlias("strength", "-s");
-	ret.addOption("randfile", "Path to file to use for saved entropy", true, "-randfile", DEFAULT_RAND_FILE);
+	//ret.addOption("randfile", "Path to file to use for saved entropy", true, "-randfile", DEFAULT_RAND_FILE);
 	ret.addOption("passwords", "Number of random passwords to generate", true, "-pw", null);
 	ret.addOption("passchars", "Non-default charset to use in passwords (usually 'aA9')", true, "-pwcs", null);
 	ret.addOption("passphrases", "Number of random passphrases to generate", true, "-pp", null);
@@ -499,9 +637,10 @@ public class RandPassGenerator {
 	ret.addOption("separator", "String to use for separating chunks (default '-')", true, "-sep", "-"); 
 	ret.addOption("wordlistURL", "URL of a list of words to use in passphrases", true, "-ppurl", null);
 	ret.addOption("outfile", "Filename or path to which output should be written; otherwise output goes to stdout", true, "-out", null);
+	ret.addOption("decrypt", "Decrypt an encrypted key file using password", false, "-decrypt", null);
+	ret.addOption("enc", "Encrypt a key to a file using password", false, "-enc", null);
 	return ret;
     }
-
 
     /**
      * Main method for the RandPassGenerator application - this method
@@ -547,14 +686,20 @@ public class RandPassGenerator {
 	boolean verbose = opt.getValueAsBoolean("verbose");
 	String passwordCharset = opt.getValue("passchars");
 	String logfile = opt.getValue("logfile");
-	String randfile = opt.getValue("randfile");
+	//String randfile = opt.getValue("randfile");
 	String outfile = opt.getValue("outfile");
 	String ppurl = opt.getValue("wordlistURL");
 	int maxWordLen = opt.getValueAsInt("wordlen");
 	int chunksize = opt.getValueAsInt("chunks");
 	String sep = opt.getValue("separator");
+	boolean decrypt = opt.getValueAsBoolean("decrypt");
+	boolean enc = opt.getValueAsBoolean("enc");
 	
 	// check for something to do
+	if (decrypt) {
+		decryptPrompt();
+	}
+	
 	if (numKeys <= 0 && numPasswords <= 0 && numPassphrases <= 0) {
 	    System.err.println("No keys, passwords, or passphrases requested.  Exiting.");
 	    System.exit(3);
@@ -573,9 +718,7 @@ public class RandPassGenerator {
 	    pw = new PrintWriter(System.out, true);
 	    pwNeedsClose = false;
 	}
-
-
-
+	
 	// ready to create the RandPassGenerator
 	if (verbose) {
 	    System.err.println(VERSION);
@@ -589,7 +732,7 @@ public class RandPassGenerator {
 
 	RandPassGenerator rpg = null;
 	try {
-	    rpg = new RandPassGenerator(logfile, randfile, pw, verbose);
+	    rpg = new RandPassGenerator(logfile, pw, verbose);
 	} catch (Exception e) {
 	    System.err.println("Could not initialize RandPassGenerator: " + e);
 	    if (verbose) {
@@ -605,7 +748,7 @@ public class RandPassGenerator {
 	int cnt;
 	if (rpg != null) {
 	    if (numKeys > 0) {
-		cnt = rpg.generateKeys(numKeys, strength);
+	    	cnt = rpg.generateKeys(numKeys, strength, enc);
 		if (cnt <= 0) {
 		    rpg.message("Failed to generate keys");
 		    rpg.getLogger().warning("Tried to generate " + numKeys + " keys, but failed.");
@@ -637,7 +780,7 @@ public class RandPassGenerator {
 		    rpg.message("Generated " + cnt + " passphrases at strength " + strength);
 		}
 	    }
-	 
+	  
 	    rpg.close();
 	}
 
