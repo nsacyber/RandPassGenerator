@@ -118,7 +118,7 @@ CHANGES FROM  1.1.4  to  1.1.5
 
 
 CHANGES FROM  1.1.5  to  1.2
-*Updated code in RandPassGenerator and RandManager classes to disable saving of entropy to a file at shutdown. Instead of saving entropy to a file during shutdown for later use as the nonce entropy source or using the system time when an entropy file doens't exist, the same entropy source as the primary entropy input for the DRBG seed is used for the nonce. SP800-90A 8.6.7 states nonce should be a random value with at least (security_strength/2) bits of entropy and the value could be acquired from the same source and at the same time as the entropy input.
+*Updated code in RandPassGenerator and RandManager classes to disable saving of entropy to a file at shutdown. Instead of saving entropy to a file during shutdown for later use as the nonce entropy source or using the system time when an entropy file doesn't exist, the same entropy source as the primary entropy input for the DRBG seed is used for the nonce. SP800-90A 8.6.7 states nonce should be a random value with at least (security_strength/2) bits of entropy and the value could be acquired from the same source and at the same time as the entropy input.
 *Added Key ID Generator to RandPassGenerator class for key accounting. It generates a KeyID for generated keys using first 64-bits of a hash of the key and current date (YYYYMMDD_hhmmssH1H2H3H4H5H6H7H8H9H10H11H12H13H14H15H16). 
 *Added key generation transaction log to RandPassGenerator class.
 *Added FileEncryption and FileDecryption utilities to allow for output files containing keys to be encrypted and unencrypted using AES and a random password. 
