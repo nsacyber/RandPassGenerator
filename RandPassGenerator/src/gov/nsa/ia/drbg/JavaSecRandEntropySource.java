@@ -136,7 +136,7 @@ public class JavaSecRandEntropySource implements EntropySource, SelfTestable {
 			     int maxOutputBytes)
     {
 	byte[] ret;
-	int blocks, tot, cc, bytes;
+	int blocks, tot, bytes;
 
 	// check that we haven't been disposed of
 	if (sources == null) return null;
