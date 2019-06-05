@@ -52,6 +52,7 @@ public class FileEntropySource implements EntropySource, SelfTestable {
 	 *            number of bytes per block to be read from file
 	 * @param bitsEntPerBlk
 	 *            number of bits of entropy expected from each block
+	 * @throws IOException
 	 */
 	public FileEntropySource(String filename, int blksiz, int bitsEntPerBlk) {
 		if (filename == null) {
@@ -314,8 +315,9 @@ public class FileEntropySource implements EntropySource, SelfTestable {
      * on the command-line.  Each file is treated as a test of the
      * FileEntropySource, but if more than one file is given then the
      * last file is treated specially, and is used for an output test.
+     * @throws IOException
      */
-    public static void main(String [] args) {
+    public static void main(String [] args) throws IOException {
     	FileEntropySource src;
     	int i;
     	int status;
