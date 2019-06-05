@@ -86,11 +86,13 @@ CHANGES FROM  1.1.0  TO  1.1.2
 
 * Added more examples to README.txt file.
 
+
+
 CHANGES FROM  1.1.2  TO  1.1.3
 
 
 * Added formatting options to permit more readable output formatting of
-  hex keys and passwords.
+ hex keys and passwords.
 
 
 
@@ -113,3 +115,16 @@ CHANGES FROM  1.1.4  to  1.1.5
 * Added code to WordSet class to enable passphrase generation error message to print to command line for 0 or negative strength values
 * Minor changes to README.txt file.
 
+
+
+CHANGES FROM  1.1.5  to  1.2
+*Updated code in RandPassGenerator and RandManager classes to disable saving of entropy to a file at shutdown. Instead of saving entropy to a file during shutdown for later use as the nonce entropy source or using the system time when an entropy file doens't exist, the same entropy source as the primary entropy input for the DRBG seed is used for the nonce. SP800-90A 8.6.7 states nonce should be a random value with at least (security_strength/2) bits of entropy and the value could be acquired from the same source and at the same time as the entropy input.
+*Added Key ID Generator to RandPassGenerator class for key accounting. It generates a KeyID for generated keys using first 64-bits of a hash of the key and current date (YYYYMMDD_hhmmssH1H2H3H4H5H6H7H8H9H10H11H12H13H14H15H16). 
+*Added key generation transaction log to RandPassGenerator class.
+*Added FileEncryption and FileDecryption utilities to allow for output files containing keys to be encrypted and unencrypted using AES and a random password. 
+*Updated README.txt file.
+
+CHANGES FROM  1.2  to  1.3
+*Added KeyWrapper and KeyUnwrapper utilities to allow for output files containing keys to be encrypted and unencrypted using AES Key Wrap (NIST SP 800-38F/RFC 3394) and a random password. DPKDF2 is used in these classes as specified in NIST SP 800-132 to derive a 256-bit key encryption key (KEK) from a user inputted random password.  
+*Removed FileEncryption and FileDecryption utilities.
+*Updated README.txt file.
