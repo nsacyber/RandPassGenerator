@@ -1,92 +1,64 @@
-RandPassGenerator 1.1.5
+RandPassGenerator 1.3
 
-The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys.  It is designed 
-very conservatively to ensure that the random values it provides offer full
- cryptographic strength requested by the user.  This text file describes 
-how to build the RandPassGenerator from source code. 
-
-
+The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.  This text file describes how to build the RandPassGenerator from source code. 
 
 DEPENDENCIES
 
-
 To build RandPassGenerator from source, you will need:
-
    
-1. Oracle Java SDK (J2SE), version 1.8 or later  [Java 8]
+1. Oracle Java SDK (J2SE), version 1.9 or later  [Java 9]
    
 2. Apache Ant   [The version that comes with J2SE is ok]
 
-
-
-
 BUILD PROCEDURE
 
-
-The procedure below works for Windows, Linux, and most other 
-platforms.  
-Each step includes Linux commands as an example.
-
+The procedure below works for Windows, Linux, and most other platforms.  Each step includes Linux commands as an example.
 
 Step 1 - create a directory in which to perform the build
 
-       	     % mkdir randpassgen
-	     
+       	% mkdir randpassgen
 
+Step 2 - Unpack the source code from the Zip file "src.zip" into the directory you created in step 1.
 
-Step 2 - Unpack the source code from the Zip file "src.zip" into
- the directory you created in step 1.
-
-
-% cd randpassgen
-	     % unzip ../src.zip
-
+	% cd randpassgen
+	% unzip ../src.zip
 
 Step 3 - Ensure that you can run the Java compiler and the Ant build utility.
-
 	     
-% javac -version
-	     % ant -version
-
+	% javac -version
+	% ant -version
 	 
-If either of these fails, then fix your Java installation
- and PATH settings before going on step 4.
+If either of these fails, then fix your Java installation and PATH settings before going on step 4.
 
 
-Step 4 - Build the RandPassGenerator runnable Jar file, by running
- Ant with the target "jar".
-
+Step 4 - Build the RandPassGenerator runnable Jar file, by running Ant with the target "jar".
 	     
-% ant jar
-
+	% ant jar
 	 
-If the Ant process concludes with anything other than
- "BUILD SUCCESSFUL", there's something wrong with Java or
-	Ant.  Fix these before going on to step 5.
+If the Ant process concludes with anything other than "BUILD SUCCESSFUL", there's something wrong with Java or	Ant.  Fix these before going on to step 5.
 
 
-Step 5 - Test the RandPassGenerator with a simple generation task,
- using the options shown below.
+Step 5 - Test the RandPassGenerator with a simple generation task, using the options shown below.
 
-	   % java -jar build/jar/PassGenerator.jar -v -str 128 -k 7
-
+	% java -jar build/jar/PassGenerator.jar -v -str 128 -k 7
 
 
 UNIT TESTING
 
-All important classes have simple unit test support.  To run the
-unit test, simply execute that class from the build/classes directory.
+All important classes have simple unit test support.  To run the unit test, simply execute that class from the build/classes directory.
 For example, to test the CharacterSet class, you can run it like this:
 
-    	     % cd build/classes
-	     % java gov.nsa.ia.gen.CharacterSet
+% cd build/classes
+	     
+% java gov.nsa.ia.gen.CharacterSet
 
-Some of the unit tests require a command-line argument; if you run
-it without an argument but one is required, then you'll get an
-error message.  For example:
+Some of the unit tests require a command-line argument; if you run it without an argument but one is required, then you'll get an error message.  
 
-      	     % cd build/classes
-	     % java gov.nsa.ia.gen.WordSet
+For example:
+     	     
+% cd build/classes
+	     
+% java gov.nsa.ia.gen.WordSet
 	     ...
 	     WARNING: WordSet test - no URL given
 	     INFO: Please supply the URL of a word dictionary file
