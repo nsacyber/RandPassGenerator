@@ -1,13 +1,11 @@
 # RandPassGenerator
-
-The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. This version of RandPassGenerator is only approved for generating random passwords and passphrases, it is not approved for the generation of raw keys.
+RandPassGenerator 1.3
+The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
 
 ### Usage Information
 
 
-To use RandPassGenerator, you'll need the Oracle Java Runtime Environment; any recent version should be sufficient, but version 8 is recommended.
-
-To run RandPassGenerator, once Java is installed, two batch script files have been provided (RandPasswordGenerator.bat and RandPassphraseGenerator.bat) to quickly generate a random password or passphrase. To use the scripts, unzip the RandPassGenerator.zip file in the C:\ drive (C:\RandPassGenerator) and run either the RandPasswordGenerator or RandPassphraseGenerator script. A text file containing the password or passphrase will be generated and saved in the C:\RandPassGenerator folder.
+To use RandPassGenerator, you'll need the Oracle Java Runtime Environment; any recent version should be sufficient, but at a minimum version 9 is recommended.
 
 The RandPassGenerator can also run from a terminal or console. The command-line syntax is simple:
 
@@ -25,6 +23,10 @@ The RandPassGenerator can also run from a terminal or console. The command-line 
 
 -k N	  {Generate N random keys of the specified strength}
 
+-enc	   {Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar RandPassGenerator.jar -pw 1 -str 96" will generate a 16 character password).}
+
+-decrypt   {Decrypt encrypted key file using a random password that is at least a 16 characters and save as text file (KEY_ID_decrypted.txt). A prompt for the name of the encrypted file to decrypt will appear, then a prompt for the random password to use will appear.}
+
 Unusual options:
   
 -pplen M  {When generating passphrases, longest word should be M letters long (minimum value of M is 3)}
@@ -34,8 +36,6 @@ Unusual options:
 -pwcs P   {Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)}
 
 -log F    {Log all operations to the log file F (default: ./randpass.log)}
-
--randfile F  {Use file F for reading saved entropy on startup, and saving entropy on finish (default: randpass-extra-entropy.dat)}
 
 -out F    {Write output to file F (default: writes to stdout)}
 
@@ -47,10 +47,8 @@ At least one of the options -pw, -pp, or -k must be supplied. The keys, password
 
 Detailed log messages are appended to the specified log file - if the log file cannot be opened, then the tool will not run. 
 
-The option -randfile can be used to load additional entropy from a file. By default, the tool will attempt to save DRBG output to that file before exiting, so that the next run of the tool can benefit from the entropy gathered for this run. If the file cannot be written to, a message will be logged, but it isn't a fatal error.
-
- Note that the -pwcs option is a little strange. Each character in the value represents a full set of characters. Any lowercase letter
- means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means 
+Note that the -pwcs option is a little strange. Each character in the value represents a full set of characters. Any lowercase letter
+means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means 
 "add a set of all digits", and anything else means "add a set of all punctuation marks". There is no way to supply a fully custom character set. Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
 
 
@@ -58,29 +56,37 @@ The option -randfile can be used to load additional entropy from a file. By defa
 
 Example 1: generate 5 random passwords using the default mixed character set, at default strength of 160, saved into file GoodPasswords.dat
  
-	java -jar PassGenerator.jar -pw 5 >GoodPasswords.dat
+	java -jar RandPassGenerator.jar -pw 5 >GoodPasswords.dat
 
 Example 2: generate 20 random passphrases using the default dictionary, at strength of 256, with verbose messages, using words up to 9 letters long, and output saved into the file passphrases.txt
 
-	java -jar PassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
+	java -jar RandPassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
 
 Example 3: generate 200 random keys at strength of 192, with logging to keygen.log, and output to mykeys.out.
 
-	java -jar PassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
+	java -jar RandPassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
 
 Example 4: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
     
-	java -jar PassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+	java -jar RandPassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
 
 Example 5: generate 10 passwords at strength 128, formatted into chunks of five characters each, separated by /.
 
-	java -jar PassGenerator.jar -pw 10 -str 128 -c 5 -sep /
+	java -jar RandPassGenerator.jar -pw 10 -str 128 -c 5 -sep /
+
+Example 6: generate 1 random key at strength 256, and encrypt to file using random password.
+
+	java -jar RandPassGenerator.jar -k 1 -str 256 -enc
+
+Example 7: Decrypt encrypted key file.  
+
+	java -jar RandPassGenerator.jar -decrypt
 	
 ### Design Information
+The foundation of RandPassGenerator is an implemention of the NIST SP800-90 Hash DRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output.  The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation.
+ 
+This implementation uses the seed mechanism of the Java SecureRandom class for gathering entropy. This implementation performs self-tests at every execution, so that users can be confident that no library problems have affected operation. Two kinds of self-tests are performed:
 
-The foundation of RandPassGenerator is an implementation of the NIST SP800-90 HashDRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output. The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation. This implementation uses the seed mechanism of the Java SecureRandom class for gathering entropy. By default, it also saves entropy from run to run.
-
-This implementation performs self-tests at every execution, so that users can be confident that no library problems have affected operation. Two kinds of self-tests are performed:
 1. Known-answer tests from the NIST Hash_DRBG verification suite test file.
 2. Simple statistical tests on DRBG output.
 
