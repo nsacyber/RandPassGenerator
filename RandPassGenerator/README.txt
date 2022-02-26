@@ -1,4 +1,4 @@
-RandPassGenerator 1.3
+RandPassGenerator 1.3.1
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.
 
