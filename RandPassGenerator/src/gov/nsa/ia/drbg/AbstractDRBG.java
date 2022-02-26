@@ -208,7 +208,8 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	 int ret = 0;
 	 int i;
 	 for(i = 0; i < 4; i++) {
-	     ret = (ret << 8) | rand_bytes[i];
+	     // bug fix, just ensure bits 31-8 of right hand operand are 0 
+	     ret = (ret << 8) | (rand_bytes[i] & 0x00ff);
 	 }
 
 	 //return new Integer(ret);
