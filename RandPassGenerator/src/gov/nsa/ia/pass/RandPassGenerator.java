@@ -35,7 +35,7 @@ public class RandPassGenerator {
     /**
      * Version string
      */
-    public static final String VERSION = "RandPassGen 1.3.1 - 4 Dec 2021";
+    public static final String VERSION = "RandPassGen 1.3.2 - 27 Feb 2021";
 
     /**
      * Path of the default log file
@@ -387,9 +387,10 @@ public class RandPassGenerator {
      * @param strength passphrase strength in bits, usually 128, 160, or 256
      * @param wordlist URL to the wordlist to use, or null for default
      * @param maxWordLen maximum length of a word to use in the passphrase, <3 means use default
+     * @param ruc random upcase the first ruc letters, 0 or positive
      * @return number of passphrases generated, or -1 on error.
      */
-    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen) {
+    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen, int ruc) {
 	WordSet ws;
 	AbstractDRBG drbg;
 
@@ -398,6 +399,7 @@ public class RandPassGenerator {
 	    message("Error - number of passphrases must be > 0");
 	    return -1;
 	}
+	if (ruc < 0) ruc = 0;
 	
 	drbg = randman.getDRBG();
 	if (!(drbg.isOkay())) {
@@ -435,7 +437,17 @@ public class RandPassGenerator {
 		return -1;
 	    } else {
 		StringJoiner sj = new StringJoiner(" ");
-		for(String s: passphrase) { sj.add(s); }
+		for(String s: passphrase) {
+		    String wrd;
+		    // if ruc <= 0 then this has no effect
+		    wrd = ws.randomUpcase(s, ruc, drbg);
+		    if (wrd == null) {
+			logger.warning("RandPassGen - fatal error in trying to randomly upcase a word");
+			return -1;
+		    }
+		    // add word to the passphrase
+		    sj.add(wrd);
+		}
 		passes.add(sj.toString());		
 	    }
 	}
@@ -662,6 +674,7 @@ public class RandPassGenerator {
 	ret.addOption("outfile", "Filename or path to which output should be written; otherwise output goes to stdout", true, "-out", null);
 	ret.addOption("decrypt", "Decrypt an encrypted key file using password", true, "-decrypt", null);
 	ret.addOption("enc", "Encrypt each key to a file using password (only for -k)", false, "-enc", null);
+	ret.addOption("randUpcase", "For passphrases, apply uppercase randomly to first N letters of each word", true, "-rcc", null);
 	return ret;
     }
 
@@ -717,6 +730,7 @@ public class RandPassGenerator {
 	String sep = opt.getValue("separator");
 	String decryptFilePath = opt.getValue("decrypt");
 	boolean enc = opt.getValueAsBoolean("enc");
+	int randUpcase = opt.getValueAsInt("randUpcase");
 	
 	// check for something to do
 	if (decryptFilePath != null) {
@@ -789,13 +803,26 @@ public class RandPassGenerator {
 		}
 	    }
 	    if (numPassphrases > 0) {
-		URL ppURL = null;
-		try {
-		    ppURL = new URL(ppurl);
-		} catch (Exception ue) {
-		    rpg.getLogger().warning("RandPassGen - bad word list URL, exception: " + ue);
+		// figure out if we are doing random upcasing
+		if (randUpcase <= 0) {
+		    randUpcase = 0;
+		} else {
+		    if (verbose) {
+			System.err.println("Using random upcase on first " + randUpcase + " letters.");
+		    }
+		    rpg.getLogger().info("Random upcase enabled for first " + randUpcase + " letters of passphrases");
 		}
-		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen);
+
+		// get the URL for the wordlist
+		URL ppURL = null;
+		if (ppurl != null && ppurl.length() > 0) {
+		    try {
+			ppURL = new URL(ppurl);
+		    } catch (Exception ue) {
+			rpg.getLogger().warning("RandPassGen - bad word list URL, exception: " + ue);
+		    }
+		}
+		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen, randUpcase);
 		if (cnt <= 0) {
 		    rpg.message("Failed to generate passphrases");
 		    rpg.getLogger().warning("Tried to generate " + numPassphrases + " passphrases, but failed.");

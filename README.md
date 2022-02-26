@@ -1,5 +1,5 @@
 # RandPassGenerator
-RandPassGenerator 1.3.1
+RandPassGenerator 1.3.2
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
 
@@ -58,6 +58,8 @@ Unusual options:
 
 -sep S    {For chunk formatting, use S as the separator (default: -)}
 
+-rcc N    {For passphrases - impose random camel-case; randomly uppercase the first N letters (default: 0)}
+
 At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
 
 Detailed log messages are appended to the specified log file - if the log file cannot be opened, then the tool will not run. 
@@ -65,6 +67,8 @@ Detailed log messages are appended to the specified log file - if the log file c
 Note that the -pwcs option is a little strange. Each character in the value represents a full set of characters. Any lowercase letter
 means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means 
 "add a set of all digits", and anything else means "add a set of all punctuation marks". There is no way to supply a fully custom character set. Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
+
+The random camel case option (-rcc N) applies only when generating passphrases using the -pp option.  Using -rcc N will apply uppercase at 50% chance to the first N letters of each passphrase word.  By default the value for this option is 0, which means that no uppercasing will be applied.  For a value of 1, only the first letter of each word might be transformed to uppercase, for 2, only first and second letter, etc.  Note that camel case can add entropy to the passphrase, but that the entropy strength does NOT take camel case into account because it varies too much.
 
 
 ### Examples

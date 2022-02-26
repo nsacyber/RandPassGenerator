@@ -188,6 +188,30 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	}
 	
     /**
+     * Get a random byte from the DRBG.   This is a convenience wrapper
+     * around generate().  If we cannot get bytes, then return null.
+     *
+     * @return random byte value (0-255) stored in an Integer, or null.
+     */
+    public Integer generateByte() {
+	int status;
+	int size_needed = 1;
+	byte rand_bytes[];
+
+	rand_bytes = new byte[size_needed];
+	status = generate(size_needed, 32, false, null, rand_bytes);
+	if (status != DRBGConstants.STATUS_SUCCESS) { return null; }
+
+	 int ret = 0;
+	 int i;
+	 ret = rand_bytes[0] & 0x00ff;
+
+	 //return new Integer(ret);
+	 return Integer.valueOf(ret);
+    }
+	
+
+    /**
      * Get a random integer from the DRBG, by getting 4 bytes and shifting
      * them into an int.  Returns null if the DRBG failed in any way.  This
      * method is not part of SP800-90, it is simply a convenience wrapper
