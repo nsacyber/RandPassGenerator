@@ -101,6 +101,10 @@ Example 7: Decrypt encrypted key file.
 
 	java -jar PassGenerator.jar -decrypt
 	
+Example 8: generate 6 passphrases at strength ~100, but using base strength of 94 plus random upcase of first letter
+
+	java -jar PassGenerator.jar -pp 6 -pplen 7 -str 94 -rcc 1
+
 
 ### Design Information
 The foundation of RandPassGenerator is an implementation of the NIST SP800-90 Hash DRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output.  The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation.
