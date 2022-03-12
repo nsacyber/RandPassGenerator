@@ -1,4 +1,4 @@
-RandPassGenerator 1.3
+RandPassGenerator 1.3.2
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.
 
@@ -45,6 +45,8 @@ Unusual options:
 -c N 	  Format output passwords and keys in chunks of N characters
   
 -sep S    For chunk formatting, use S as the separator (default: -)
+
+-rcc N    For passphrases, randomly upcase first N letters of each word (default: 0)
   
 At least one of the options -pw, -pp, or -k must be supplied.  The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file.  All messages are written to the standard error (stderr).  
 

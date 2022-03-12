@@ -26,14 +26,16 @@ import gov.nsa.ia.util.*;
  * Run it with no arguments at all to get a usage message.
  *
  * @author nziring
- * Updated 09252018 by amsagos
+ *
+ * Updated 20180925 by amsagos
+ * Updated 20211204 by nlzirin
  */
 
 public class RandPassGenerator {
     /**
      * Version string
      */
-    public static final String VERSION = "RandPassGen 1.3 - 1 Oct 2018";
+    public static final String VERSION = "RandPassGen 1.3.2 - 27 Feb 2021";
 
     /**
      * Path of the default log file
@@ -121,6 +123,7 @@ public class RandPassGenerator {
 	
 	this.verbose = verbose;
 	logger = Logger.getLogger("RandPassGen-log");
+	
 	if (logfile != null) {
 	    FileHandler fh = null;
 	    try {
@@ -151,7 +154,6 @@ public class RandPassGenerator {
 
 	// log that we've started up
 	logger.info("RandPassGenerator - starting operation of " + VERSION);
-	KeyLogger.info("RandPassGenKeyGenerationLog - starting operation of " + VERSION);
 	
 	// set the output writer
 	if (pw == null) {
@@ -385,9 +387,10 @@ public class RandPassGenerator {
      * @param strength passphrase strength in bits, usually 128, 160, or 256
      * @param wordlist URL to the wordlist to use, or null for default
      * @param maxWordLen maximum length of a word to use in the passphrase, <3 means use default
+     * @param ruc random upcase the first ruc letters, 0 or positive
      * @return number of passphrases generated, or -1 on error.
      */
-    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen) {
+    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen, int ruc) {
 	WordSet ws;
 	AbstractDRBG drbg;
 
@@ -396,6 +399,7 @@ public class RandPassGenerator {
 	    message("Error - number of passphrases must be > 0");
 	    return -1;
 	}
+	if (ruc < 0) ruc = 0;
 	
 	drbg = randman.getDRBG();
 	if (!(drbg.isOkay())) {
@@ -433,7 +437,17 @@ public class RandPassGenerator {
 		return -1;
 	    } else {
 		StringJoiner sj = new StringJoiner(" ");
-		for(String s: passphrase) { sj.add(s); }
+		for(String s: passphrase) {
+		    String wrd;
+		    // if ruc <= 0 then this has no effect
+		    wrd = ws.randomUpcase(s, ruc, drbg);
+		    if (wrd == null) {
+			logger.warning("RandPassGen - fatal error in trying to randomly upcase a word");
+			return -1;
+		    }
+		    // add word to the passphrase
+		    sj.add(wrd);
+		}
 		passes.add(sj.toString());		
 	    }
 	}
@@ -518,32 +532,30 @@ public class RandPassGenerator {
 	
 	logger.info("RandPassGen - generated " + keys.size() + " keys at strength " + strength);
 	int a = 0;
+
+	ArrayList<String> hkeyIDs = generateKeyIDList(hkeys);
 	for(String p: keys) {
+	    // TODO: refactor the code below to merge common output code
 	    if (useChunking) {
-			outputWriter.println(formatWithSeparators(p, chunkSize, chunkSep));
-			//print key ID
-			outputWriter.println("Key ID:");
-			outputWriter.println(KeyIDGen(hkeys).get(a));
-			//print to key generation transaction log
-			KeyLogger.fine(KeyIDGen(hkeys).get(a));		
-			keyfilename = KeyIDGen(hkeys).get(a);
-			a++;
-			if (enc) {
-				Encryptfile(keyfilename, p);
-			}	
+		outputWriter.println(formatWithSeparators(p, chunkSize, chunkSep));
 	    } else {
-			outputWriter.println(p);
-			//print key ID
-			outputWriter.println("Key ID:");
-			outputWriter.println(KeyIDGen(hkeys).get(a));
-			//print to key generation transaction log
-			KeyLogger.fine(KeyIDGen(hkeys).get(a));
-			
-			keyfilename = KeyIDGen(hkeys).get(a);
-			a++;
-			if (enc) 
-				Encryptfile(keyfilename, p);
-		    }	    
+		outputWriter.println(p);
+	    }	    
+
+	    //print key ID
+	    outputWriter.println("Key ID:");
+	    outputWriter.println(hkeyIDs.get(a));
+	    //print to key generation transaction log
+	    KeyLogger.fine(hkeyIDs.get(a));		
+	    keyfilename = hkeyIDs.get(a);
+	    a++;
+
+	    // if user asked for password encryption, create an encrypted file for
+	    // just that particular key
+	    if (enc) {
+		encryptFileWithPassword(keyfilename, p);
+		logger.fine("RandPassGen - encrypted key " + keyfilename + " with password");
+	    }	
 	}
 	
 	outputWriter.flush();
@@ -553,55 +565,78 @@ public class RandPassGenerator {
     }
      
     /**
+     * Encrypt a file using standard password-based encryption.
+     *
+     * TODO: this encryption functionality is seriously crufty and 
+     *    needs a rewrite.  Original version read a password with
+     *    no display, once, so user couldn't see it!
+     *       
      * Key File Encryption Prompt.
-     * Encrypts generated key to a file using user inputed random password
+     * Encrypts generated key to a file using a password 
+     * types by the user on system console.
+     *
+     * @param keyfilename name of the file to encrypt
+     * @param input 
      */
-    public static void Encryptfile(String keyfilename, String input) {
+    public static void encryptFileWithPassword(String keyfilename, String input) {
     	File encryptedFile = new File(keyfilename + ".enc");
     	Console br = System.console();
+	System.out.println("Encrypting key file " + keyfilename);
     	System.out.print("Provide a random password of at least 16 characters: ");  
     	// Get the password from user.
-    	char[] pass = null;
-		pass = br.readPassword();
-		KeyWrapper.fileProcessor(pass, input, encryptedFile);
+    	String pass = null;
+	pass = br.readLine();
+	KeyWrapper.fileProcessor(pass.toCharArray(), input, encryptedFile);
     }
     
-    /**
+    /***
+     * Decrypt an encrypted key file, using a password read from the console.
+     *
+     * TODO: the encrypt/decrypt functionality is seriously crufty and
+     *    needs a rewrite.
+     * 
      * Key File Decryption Prompt.
      * Decrypts user provided file using user provided password
+     *
+     * @param encryptedFile path to the encrypted file
      */
-    public static void decryptPrompt() {
+    public static void decryptPrompt(String encryptedFilePath) {
 	   
-	    Scanner scanner = new Scanner (System.in);
-	    System.out.print("Provide the name of the encrypted file to decrypt: ");  
-	    String filename = scanner.next(); // Get what the user types.
+	    File encryptedFile = new File(encryptedFilePath);
+
+	    Console br = System.console();
+
+	    System.out.println("Decrypting key file " + encryptedFilePath);
+	    System.out.print("Provide the original encryption password: ");  
 	    
-	    File encryptedFile = new File(filename);
+	    String pass = null;
+	    pass = br.readLine();
 	    
-	    System.out.print("Provide the random encryption password: ");  
-	    String ek = scanner.next(); // Get what the user types.
-	    scanner.close();
 	    //decrypt key file
-	    File decryptedFile = new File(encryptedFile + "_decrypted.txt");
-		KeyUnwrapper.fileProcessor(ek, encryptedFile, decryptedFile);  
+	    File decryptedFile = new File(encryptedFilePath + "_decrypted.txt");
+	    System.err.println("Attempting to decrypt input file to output " + decryptedFile);
+	    KeyUnwrapper.fileProcessor(pass, encryptedFile, decryptedFile);
+	    System.err.println("Wrote decrypted key to " + decryptedFile);
     }
 
     /**
-     * Key ID Generator.
+     * Generate a list of Key IDs, given a list of key hashes.
+     * 
      * Generates KeyID of key using first 64-bits of Hash and current date (YYYYMMDD_hhmmssH1H2H3H4H5H6H7H8H9H10H11H12H13H14H15H16).
+     * 
+     * @param hkeys an ArrayList of hashes of keys
+     * @return an ArrayList of IDs
      */
-    private static ArrayList<String> KeyIDGen(ArrayList<String> hkeys) {
-	
+    private static ArrayList<String> generateKeyIDList(ArrayList<String> hkeys)
+    {
 	ArrayList<String> fhkeys = new ArrayList<String>();
 		
 	for(String hhk: hkeys) {		
-		String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-		ArrayList<String> ts = new ArrayList<String>();
-		ts.add(timestamp);
-		fhkeys.add(ts.get(0)+hhk.substring(0,16));
+	    String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+	    fhkeys.add(timestamp + hhk.substring(0,16));
 	}
 	return fhkeys;
-	}
+     }
     
     /**
      * Byte to Hex converter.
@@ -637,8 +672,9 @@ public class RandPassGenerator {
 	ret.addOption("separator", "String to use for separating chunks (default '-')", true, "-sep", "-"); 
 	ret.addOption("wordlistURL", "URL of a list of words to use in passphrases", true, "-ppurl", null);
 	ret.addOption("outfile", "Filename or path to which output should be written; otherwise output goes to stdout", true, "-out", null);
-	ret.addOption("decrypt", "Decrypt an encrypted key file using password", false, "-decrypt", null);
-	ret.addOption("enc", "Encrypt a key to a file using password", false, "-enc", null);
+	ret.addOption("decrypt", "Decrypt an encrypted key file using password", true, "-decrypt", null);
+	ret.addOption("enc", "Encrypt each key to a file using password (only for -k)", false, "-enc", null);
+	ret.addOption("randUpcase", "For passphrases, apply uppercase randomly to first N letters of each word", true, "-rcc", null);
 	return ret;
     }
 
@@ -652,7 +688,7 @@ public class RandPassGenerator {
     public static void main(String [] args) {
 	int errs = 0;
 	PrintWriter pw = null;
-	boolean pwNeedsClose = false;
+	
 	OptionManager opt = makeOptions();
 
 	if (args.length == 0) {
@@ -692,12 +728,14 @@ public class RandPassGenerator {
 	int maxWordLen = opt.getValueAsInt("wordlen");
 	int chunksize = opt.getValueAsInt("chunks");
 	String sep = opt.getValue("separator");
-	boolean decrypt = opt.getValueAsBoolean("decrypt");
+	String decryptFilePath = opt.getValue("decrypt");
 	boolean enc = opt.getValueAsBoolean("enc");
+	int randUpcase = opt.getValueAsInt("randUpcase");
 	
 	// check for something to do
-	if (decrypt) {
-		decryptPrompt();
+	if (decryptFilePath != null) {
+	    if (verbose) System.err.println("RandPassGen - attempting to decrypt encrypted key file " + decryptFilePath);
+	    decryptPrompt(decryptFilePath);
 	}
 	
 	if (numKeys <= 0 && numPasswords <= 0 && numPassphrases <= 0) {
@@ -716,7 +754,6 @@ public class RandPassGenerator {
 	    }
 	} else {
 	    pw = new PrintWriter(System.out, true);
-	    pwNeedsClose = false;
 	}
 	
 	// ready to create the RandPassGenerator
@@ -766,13 +803,26 @@ public class RandPassGenerator {
 		}
 	    }
 	    if (numPassphrases > 0) {
-		URL ppURL = null;
-		try {
-		    ppURL = new URL(ppurl);
-		} catch (Exception ue) {
-		    rpg.getLogger().warning("RandPassGen - bad word list URL, exception: " + ue);
+		// figure out if we are doing random upcasing
+		if (randUpcase <= 0) {
+		    randUpcase = 0;
+		} else {
+		    if (verbose) {
+			System.err.println("Using random upcase on first " + randUpcase + " letters.");
+		    }
+		    rpg.getLogger().info("Random upcase enabled for first " + randUpcase + " letters of passphrases");
 		}
-		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen);
+
+		// get the URL for the wordlist
+		URL ppURL = null;
+		if (ppurl != null && ppurl.length() > 0) {
+		    try {
+			ppURL = new URL(ppurl);
+		    } catch (Exception ue) {
+			rpg.getLogger().warning("RandPassGen - bad word list URL, exception: " + ue);
+		    }
+		}
+		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen, randUpcase);
 		if (cnt <= 0) {
 		    rpg.message("Failed to generate passphrases");
 		    rpg.getLogger().warning("Tried to generate " + numPassphrases + " passphrases, but failed.");
@@ -787,7 +837,7 @@ public class RandPassGenerator {
 	// flush and close the output PrintWriter if necessary
 	if (pw != null) {
 	    if (pw.checkError()) {
-		System.err.println("Error: output stream reported an error; output might not be complete.");
+	    	System.err.println("Error: output stream reported an error; output might not be complete.");
 	    }
 	    pw.close();
 	    pw = null;

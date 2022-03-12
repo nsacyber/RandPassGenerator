@@ -274,7 +274,8 @@ public class CharacterSet {
 	short sval;
 	for(i = 0, j = 0; j < BUFFER_FILL_SIZE; j++) {
 	    val = bytes[i];
-	    val = (val << 8) | bytes[i + 1];
+	    // bug fix, ensure that bits 31-8 of right hand operand are 0
+	    val = (val << 8) | (bytes[i + 1] & 0x00ff);
 	    i += 2;
 	    sval = (short)(val & 0x7fff);
 	    shortbuf[j] = sval;

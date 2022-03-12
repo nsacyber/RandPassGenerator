@@ -128,3 +128,10 @@ CHANGES FROM  1.2  to  1.3
 *Added KeyWrapper and KeyUnwrapper utilities to allow for output files containing keys to be encrypted and unencrypted using AES Key Wrap (NIST SP 800-38F/RFC 3394) and a random password. DPKDF2 is used in these classes as specified in NIST SP 800-132 to derive a 256-bit key encryption key (KEK) from a user inputted random password.  
 *Removed FileEncryption and FileDecryption utilities.
 *Updated README.txt file.
+
+CHANGES FROM  1.3  to 1.3.2
+* Fixed a few small bugs found in 2021
+* Added "random uppercase" feature for passphrases
+* Removed a few possibly offensive words from wordlist
+* Added "build info" section to the main README.md file
+* A little code clean-up; but the encrypt/decrypt feature still needs a rewrite
