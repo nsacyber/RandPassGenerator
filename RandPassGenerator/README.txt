@@ -1,4 +1,4 @@
-RandPassGenerator 1.3.2
+RandPassGenerator 1.3.3
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.
 
@@ -37,7 +37,10 @@ Unusual options:
 -ppurl U  Use the URL U to load words for passphrase (default: use internal list)	
   
 -pwcs P   Use character pattern P for characters to use in passwords
- (lowercase letter, uppercase letter, number, special character, or combination) 
+ (lowercase letter, uppercase letter, number, special character, or combination)
+
+-pwcustom F   Use contents of file F as a custom character set, non-printable characters ignored
+
 -log F    Log all operations to the log file F (default: ./randpass.log)
    
 -out F    Write output to file F (default: writes to stdout)
@@ -61,29 +64,36 @@ Below are some examples of running RandPassGenerator in normal ways:
 
 Example 1: generate 5 random passwords using the default mixed character set, at default strength of 160, saved into file GoodPasswords.dat
 
-    java -jar RandPassGenerator.jar -pw 5  >GoodPasswords.dat
+    java -jar PassGenerator.jar -pw 5  >GoodPasswords.dat
 
 Example 2: generate 20 random passphrases using the default dictionary, at strength of 256, with verbose messages, using words up to 9 letters long, and output saved into the file passphrases.txt
 
-    java -jar RandPassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
+    java -jar PassGenerator.jar -v -pp 20 -str 256 -pplen 9 >passphrases.txt
 
 Example 3: generate 200 random keys at strength of 192, with logging to keygen.log, and output to mykeys.out.
 
-    java -jar RandPassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
+    java -jar PassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
 
-Example 4: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
+Example 4a: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
 
-    java -jar RandPassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+    java -jar PassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+
+Example 4b: generate 100 passwords at strength 96, using a custom character set, and verbose output messages
+
+    java -jar PassGenerator.jar -pw 100 -str 96 -pwcustom MyPwdChars.txt -v
 
 Example 5: generate 10 passwords at strength 128, formatted into chunks of five characters each, separated by /.
 
-    java -jar RandPassGenerator.jar -pw 10 -str 128 -c 5 -sep /
+    java -jar PassGenerator.jar -pw 10 -str 128 -c 5 -sep /
     
 Example 6: generate 1 random key at strength 256, and encrypt to file using random password.
 
-    java -jar RandPassGenerator.jar -k 1 -str 256 -enc
+    java -jar PassGenerator.jar -k 1 -str 256 -enc
 
-Example 7: Decrypt encrypted key file.  java -jar RandPassGenerator.jar -decrypt
+Example 7: Decrypt encrypted key file.
+
+    java -jar PassGenerator.jar -decrypt
+    
 
 DESIGN INFORMATION
 

@@ -1,5 +1,5 @@
 # RandPassGenerator
-RandPassGenerator 1.3.2
+RandPassGenerator 1.3.3
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
 
@@ -50,6 +50,8 @@ Unusual options:
 
 -pwcs P   {Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)}
 
+-pwcustom F {Use the specified file F as the source of a custom character set; F must be readable}
+
 -log F    {Log all operations to the log file F (default: ./randpass.log)}
 
 -out F    {Write output to file F (default: writes to stdout)}
@@ -66,7 +68,9 @@ Detailed log messages are appended to the specified log file - if the log file c
 
 Note that the -pwcs option is a little strange. Each character in the value represents a full set of characters. Any lowercase letter
 means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means 
-"add a set of all digits", and anything else means "add a set of all punctuation marks". There is no way to supply a fully custom character set. Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
+"add a set of all digits", and anything else means "add a set of all punctuation marks".  Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
+
+If you want a fully custom character set, use the -pwcustom option.  For this option, you provide a file.  Each printable character in the file is taken as a character for a custom password character set.  Non-printable characters like TAB or NEWLINE are ignored.  Note that the set is de-duped, so even if the letter 'A' appears six times, it acts as if it appeared once.  The -pwcustom and -pwcs options may not be used together, at most one of them may appear for a given invocation of RandPassGenerator.
 
 The random camel case option (-rcc N) applies only when generating passphrases using the -pp option.  Using -rcc N will apply uppercase at 50% chance to the first N letters of each passphrase word.  By default the value for this option is 0, which means that no uppercasing will be applied.  For a value of 1, only the first letter of each word might be transformed to uppercase, for 2, only first and second letter, etc.  Note that camel case can add entropy to the passphrase, but that the entropy strength does NOT take camel case into account because it varies too much.
 
@@ -85,9 +89,13 @@ Example 3: generate 200 random keys at strength of 192, with logging to keygen.l
 
 	java -jar PassGenerator.jar -k 200 -str 192 -log keygen.log -out mykeys.out
 
-Example 4: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
+Example 4a: generate 100 passwords at strength 160, using a character set of lowercase letters and digits, with output redirected to hi-quality-stuff.txt
     
 	java -jar PassGenerator.jar -pw 100 -pwcs "a0"  >hi-quality-stuff.txt
+
+Example 4b: generate 100 passwords at strength 96, using a custom character set, and verbose output messages
+
+	java -jar PassGenerator.jar -pw 100 -str 96 -pwcustom MyPwdChars.txt -v
 
 Example 5: generate 10 passwords at strength 128, formatted into chunks of five characters each, separated by /.
 

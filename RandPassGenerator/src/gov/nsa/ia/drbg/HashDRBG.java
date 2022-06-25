@@ -943,6 +943,20 @@ public class HashDRBG extends AbstractDRBG {
 			testint = rnd.generateInteger(0);
 			System.err.println("Generated random integer: " + testint);
 
+			testint = rnd.generateIntegerAtSize(0,3);
+			System.err.println("Generated random 3-byte integer: " + testint);
+			testint = rnd.generateIntegerAtSize(0,3);
+			System.err.println("Generated random 3-byte integer: " + testint);
+			testint = rnd.generateIntegerAtSize(0,3);
+			System.err.println("Generated random 3-byte integer: " + testint);
+
+			testint = rnd.generateIntegerAtSize(0,2);
+			System.err.println("Generated random 2-byte integer: " + testint);
+			testint = rnd.generateIntegerAtSize(0,2);
+			System.err.println("Generated random 2-byte integer: " + testint);
+			testint = rnd.generateIntegerAtSize(0,2);
+			System.err.println("Generated random 2-byte integer: " + testint);
+
 			status = rnd.generate(16, 256, false, null, output);
 			if (status == STATUS_SUCCESS) {
 				System.err.println("generate succeeded.");
@@ -962,6 +976,19 @@ public class HashDRBG extends AbstractDRBG {
 			System.err.println("Chi-squared statistic for 3 bit chunks = " + chisq);
 			chisq = EntropyUtil.chiSquaredStatistic(output, output.length, 4);
 			System.err.println("Chi-squared statistic for 4 bit chunks = " + chisq);
+
+			int intbuf[];
+			int ibx, ibxlim;
+			ibxlim = 30000;
+			intbuf = new int[ibxlim];
+			for(ibx = 0; ibx < ibxlim; ibx++) {
+			    Integer ir;
+			    ir = rnd.generateIntegerAtSize(0, 2);
+			    intbuf[ibx] = ir.intValue();
+			}
+			System.err.println("Generated " + ibxlim + " random 2-byte integers.");			double tbentropy;
+			tbentropy = EntropyUtil.computeShortEntropy(intbuf, ibxlim);
+			System.err.println("short entropy of int sample: " + tbentropy);
 
 			status = rnd.reseed("self-test-2".getBytes());
 			if (status == STATUS_SUCCESS) {

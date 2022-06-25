@@ -54,7 +54,40 @@ public class EntropyUtil {
 		}
 		return -sum;
 	}
-	
+
+	/**
+	 * Compute the short entropy of a sample, return it.
+	 * @param buf buffer of integers, all 0-MAX_SHORT
+	 * @param len number of integers in the buffer
+	 * @return shannon entropy of 16-bit chunks in the buffer
+	 */
+	public static double computeShortEntropy(int [] buf, int len) {
+		int count, mask;
+		count = 65536;
+		mask = count - 1;
+		int[] buckets;
+		buckets = new int[count];
+		double p[];
+
+		if (len == 0) len = buf.length;
+		int i;
+		for (i = 0; i < len; i++) {
+			buckets[(int) (buf[i]) & mask] += 1;
+		}
+
+		p = new double[count];
+		for(i = 0; i < count; i++) {
+			p[i] = ((double)buckets[i])/(double)len;
+		}
+		double sum;
+		sum = 0.0;
+		for(i = 0; i < count; i++) {
+			if (p[i] > 0.0) sum += p[i] * log2(p[i]);
+		}
+		return -sum;
+	}
+
+    
 	/**
 	 * Max bit chunk sample size allowed for chi-squared computation
 	 */

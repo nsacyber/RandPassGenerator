@@ -35,7 +35,7 @@ public class RandPassGenerator {
     /**
      * Version string
      */
-    public static final String VERSION = "RandPassGen 1.3.2 - 27 Feb 2021";
+    public static final String VERSION = "RandPassGen 1.3.3 - 25 June 2022";
 
     /**
      * Path of the default log file
@@ -93,7 +93,7 @@ public class RandPassGenerator {
      * Print a message to stderr, if verbose is turned on.
      */    
     private void startmessage(String s) {
-    if (verbose) System.err.println(s);
+	if (verbose) System.err.println(s);
     }
 
     /**
@@ -297,13 +297,19 @@ public class RandPassGenerator {
      * letter in the string causes the password to have lowercase
      * letters, uppercase letter adds uppercase, digit adds digits,
      * anything else adds basic punctutation.
+     * 
+     * If the charsetfile argument is supplied, then it is read 
+     * and used to create the custom charset.  Note that 
+     * charsets and charsetfile should not both be supplied, but
+     * if they are then charsetfile takes precedence.
      *
      * @param count  how many passwords to generate, positive
      * @param strength password strength in bits, usually 128, 160, or 256
      * @param charsets  which charsets to use in the password, if null then use default
+     * @param charsetfile a custom charset file to read, if null then use default
      * @return number of passwords generated, or -1 on error
      */
-    public int generatePasswords(int count, int strength, String charsets) {
+    public int generatePasswords(int count, int strength, String charsets, String charsetfile) {
 	CharacterSet cs;
 	AbstractDRBG drbg;
 
@@ -326,7 +332,26 @@ public class RandPassGenerator {
 	}
 
 	cs = new CharacterSet(logger);
-	if (charsets != null) {
+	if (charsetfile != null) {
+	    BufferedReader br;
+	    try {
+		br = new BufferedReader(new FileReader(charsetfile));
+		logger.info("Opened custom charset file " + charsetfile);
+
+		String line;
+		line = br.readLine();
+		while(line != null) {
+		    cs.addSet(line.trim());
+		    line = br.readLine();
+		}
+		br.close();
+	    } catch(IOException ie) {
+		logger.severe("RandPassGen - unable to read custom character set file '" + charsetfile + "', cannot proceed.");
+		message("Unable to read custom character set file.  Cannot proceed.");
+		return -1;
+	    }
+	}
+	else if (charsets != null) {
 	    int ix;
 	    for(ix = 0; ix < charsets.length(); ix++) {
 		if (Character.isLowerCase(charsets.charAt(ix))) {
@@ -343,11 +368,16 @@ public class RandPassGenerator {
 		}
 	    }
 	}
+
+	// go to default if nothing was added
 	if (cs.size() == 0) {
 	    cs.addSet(CharacterSet.DEFAULT_USABLE);
 	}
 
 	logger.fine("RandPassGen - initialized password character set, size=" + cs.size());
+	if (verbose) {
+	    message("RandPassGen - initialized password character set, size=" + cs.size());
+	}
 
 	int i;
 	String pass;
@@ -664,6 +694,7 @@ public class RandPassGenerator {
 	//ret.addOption("randfile", "Path to file to use for saved entropy", true, "-randfile", DEFAULT_RAND_FILE);
 	ret.addOption("passwords", "Number of random passwords to generate", true, "-pw", null);
 	ret.addOption("passchars", "Non-default charset to use in passwords (usually 'aA9')", true, "-pwcs", null);
+	ret.addOption("customfile", "File containing an explicit custom charset to use in passwords", true, "-pwcustom", null);
 	ret.addOption("passphrases", "Number of random passphrases to generate", true, "-pp", null);
 	ret.addOption("keys", "Number of raw hexadecimal keys to generate", true, "-k", null);
 	ret.addOption("verbose", "Whether to print verbose messages", false, "-v", null);
@@ -721,6 +752,7 @@ public class RandPassGenerator {
 	int numKeys = opt.getValueAsInt("keys");
 	boolean verbose = opt.getValueAsBoolean("verbose");
 	String passwordCharset = opt.getValue("passchars");
+	String passwordCustomCharsetFile = opt.getValue("customfile");
 	String logfile = opt.getValue("logfile");
 	//String randfile = opt.getValue("randfile");
 	String outfile = opt.getValue("outfile");
@@ -731,7 +763,7 @@ public class RandPassGenerator {
 	String decryptFilePath = opt.getValue("decrypt");
 	boolean enc = opt.getValueAsBoolean("enc");
 	int randUpcase = opt.getValueAsInt("randUpcase");
-	
+
 	// check for something to do
 	if (decryptFilePath != null) {
 	    if (verbose) System.err.println("RandPassGen - attempting to decrypt encrypted key file " + decryptFilePath);
@@ -743,6 +775,12 @@ public class RandPassGenerator {
 	    System.exit(3);
 	}
 	
+	// check that conflicting options were not supplied
+	if (passwordCharset != null && passwordCustomCharsetFile != null) {
+	    System.err.println("Option conflict: -pwcs and -pwcustom may not be supplied together.  Exiting.");
+	    System.exit(4);
+	}
+
 	// prepare output file, if necessary
 	if (outfile != null) {
 	    pw = null;
@@ -781,6 +819,10 @@ public class RandPassGenerator {
 	// set up chunking, if user options specify it
 	rpg.setChunkFormatting(chunksize, sep);
 
+	// set up the custom character set if user supplied a
+	// custom character set file
+	
+
 	// Do the work that the user asked of us
 	int cnt;
 	if (rpg != null) {
@@ -794,7 +836,7 @@ public class RandPassGenerator {
 		}
 	    }
 	    if (numPasswords > 0) {
-		cnt = rpg.generatePasswords(numPasswords, strength, passwordCharset);
+		cnt = rpg.generatePasswords(numPasswords, strength, passwordCharset, passwordCustomCharsetFile);
 		if (cnt <= 0) {
 		    rpg.message("Failed to generate passwords");
 		    rpg.getLogger().warning("Tried to generate " + numPasswords + " passwords, but failed.");

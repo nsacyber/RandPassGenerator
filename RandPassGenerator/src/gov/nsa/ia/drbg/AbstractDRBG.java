@@ -212,6 +212,43 @@ public abstract class AbstractDRBG implements DRBG, DRBGConstants, SelfTestable 
 	
 
     /**
+     * Get a random integer at particular size from the DRBG, by getting numBytes
+     * bytes and shifting them into an int.  Returns null if the DRBG failed
+     * in any way.  This
+     * method is not part of SP800-90, it is simply a convenience wrapper
+     * around generate().
+     *
+     * @param requestedStrength strength parameter, if the DRBG cannot satisfy this then the call will fail.  Pass 0 to simply accept the instantiated strength of this DRBG
+     * @param numBytes number of bytes to use for generating the integer, usually 2 or 3
+     * @return random int stored in an Integer, or null on failure.
+     */
+    public Integer generateIntegerAtSize(int requestedStrength, int numBytes) {
+	 int status;
+	 int size_needed;
+	 byte rand_bytes[];
+
+	 if (numBytes < 1 || numBytes > 4) {
+	     return null;
+	 }
+
+	 size_needed = numBytes;
+	 rand_bytes = new byte[size_needed];
+	 status = generate(size_needed, requestedStrength, false, null, rand_bytes);
+	 if (status != DRBGConstants.STATUS_SUCCESS) { return null; }
+
+	 int ret = 0;
+	 int i;
+	 for(i = 0; i < size_needed; i++) {
+	     // bug fix, just ensure bits 31-8 of right hand operand are 0 
+	     ret = (ret << 8) | (rand_bytes[i] & 0x00ff);
+	 }
+
+	 //return new Integer(ret);
+	 return Integer.valueOf(ret);
+    }
+
+
+    /**
      * Get a random integer from the DRBG, by getting 4 bytes and shifting
      * them into an int.  Returns null if the DRBG failed in any way.  This
      * method is not part of SP800-90, it is simply a convenience wrapper

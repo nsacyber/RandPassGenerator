@@ -29,7 +29,7 @@ import gov.nsa.ia.util.*;
  *   Therefore, it is not possible to use this class to make a 
  *   password where some characters (e.g., lowercase letters) appear
  *   more often than others (e.g., digits).  Such passwords might be
- *   useful in some contexts, but this class will make them.
+ *   useful in some contexts, but this class will not make them.
  *
  * @author Neal Ziring
  * Updated by amsagos
@@ -172,12 +172,15 @@ public class CharacterSet {
 
 	for(sx = 0; sx < src.length; sx++) {
 	    c = src[sx];
-	    for(tq = 0; tq < tx; tq++) {
-		if (c == tmp[tq]) break;
-	    }
-	    if (tq >= tx) {
-		tmp[tx] = c;
-		tx += 1;
+	    if (!(Character.isISOControl(c) || Character.isWhitespace(c) ||
+		  Character.isSpaceChar(c))) {
+		for(tq = 0; tq < tx; tq++) {
+		    if (c == tmp[tq]) break;
+		}
+		if (tq >= tx) {
+		    tmp[tx] = c;
+		    tx += 1;
+		}
 	    }
 	}
 

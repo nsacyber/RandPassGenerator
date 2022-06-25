@@ -223,13 +223,19 @@ public class WordSet {
      */
     public String getRandomWord(AbstractDRBG drbg) {
 	int rval;
+	int intsize;
 	Integer r;
 
 	rval = -1;
+
+	intsize = 4;
+	if (rlimit < (1<<20)) intsize = 3;
+	if (rlimit < (1<<12)) intsize = 2;
+	
 	// keep getting random integers until we get a positive one
 	// that is less than rlimit
 	while (rval < 0 || rval >= rlimit) {
-	    r = drbg.generateInteger(0);
+	    r = drbg.generateIntegerAtSize(0,intsize);
 	    if (r == null) {
 		logger.warning("WordSet - could not get random word, generateInteger returned null.");
 		return null;
