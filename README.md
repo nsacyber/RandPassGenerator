@@ -1,5 +1,6 @@
 # RandPassGenerator
-RandPassGenerator 1.3.3
+
+RandPassGenerator 1.3.4
 
 The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
 
@@ -12,7 +13,7 @@ Go to the directory containing build.xml, and run ant as shown below.
 
 	ant jar
 
-This will create build/jar/PassGenerator.jar.  Copy the jar file to somewhere convenient where you want to generate passwords or passphrases.
+This will create `build/jar/PassGenerator.jar`.  Copy the jar file to somewhere convenient where you want to generate passwords or passphrases.
 
 	cp build/jar/PassGenerator.jar $HOME
 
@@ -28,39 +29,43 @@ The RandPassGenerator can run from a terminal or console. The command-line synta
 
 ### Options
 
--v	  {Print verbose messages during operation, in addition to logging}
+`-v`	  {Print verbose messages during operation, in addition to logging}
 
--str S    {Use generation strength of S bits (default: 160)}
+`-str S`    {Use generation strength of S bits (default: 160)}
 
--pw N	  {Generate N random password of the specified strength}
+`-pw N`	  {Generate N random password of the specified strength}
 
--pp N	  {Generate N random passphrases of the specified strength}
+`-pp N`	  {Generate N random passphrases of the specified strength}
 
--k N	  {Generate N random keys of the specified strength}
+`-k N`	  {Generate N random keys of the specified strength}
 
--enc	   {Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar PassGenerator.jar -pw 1 -str 96" will generate a 16 character password).}
+`-un N`   {Generate N random usernames from the prefix list}
 
--decrypt   {Decrypt encrypted key file using a random password that is at least a 16 characters and save as text file (KEY_ID_decrypted.txt). A prompt for the name of the encrypted file to decrypt will appear, then a prompt for the random password to use will appear.}
+`-enc`	   {Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar PassGenerator.jar -pw 1 -str 96" will generate a 16 character password).}
+
+`-decrypt`   {Decrypt encrypted key file using a random password that is at least a 16 characters and save as text file (KEY_ID_decrypted.txt). A prompt for the name of the encrypted file to decrypt will appear, then a prompt for the random password to use will appear.}
 
 Unusual options:
   
--pplen M  {When generating passphrases, longest word should be M letters long (minimum value of M is 3)}
+`-pplen M`  {When generating passphrases, longest word should be M letters long (minimum value of M is 3)}
 
--ppurl U  {Use the URL U to load words for passphrase (default: use internal list)}
+`-ppurl U`  {Use the URL U to load words for passphrase (default: use internal list)}
 
--pwcs P   {Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)}
+`-unurl U`  {Use the URL U to load prefix for username (default: use internal list)}
 
--pwcustom F {Use the specified file F as the source of a custom character set; F must be readable}
+`-pwcs P`   {Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)}
 
--log F    {Log all operations to the log file F (default: ./randpass.log)}
+`-pwcustom F` {Use the specified file F as the source of a custom character set; F must be readable}
 
--out F    {Write output to file F (default: writes to stdout)}
+`-log F`    {Log all operations to the log file F (default: ./randpass.log)}
 
--c N 	    {Format output passwords and keys in chunks of N characters}
+`-out F`    {Write output to file F (default: writes to stdout)}
 
--sep S    {For chunk formatting, use S as the separator (default: -)}
+`-c N` 	    {Format output passwords and keys in chunks of N characters}
 
--rcc N    {For passphrases - impose random camel-case; randomly uppercase the first N letters (default: 0)}
+`-sep S`    {For chunk formatting, use S as the separator (default: -)}
+
+`-rcc N`    {For passphrases - impose random camel-case; randomly uppercase the first N letters (default: 0)}
 
 At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
 
@@ -115,6 +120,7 @@ Example 8: generate 6 passphrases at strength ~100, but using base strength of 9
 
 
 ### Design Information
+
 The foundation of RandPassGenerator is an implementation of the NIST SP800-90 Hash DRBG.  It uses entropy, carefully gathered from system sources, to generate quality random output.  The internal strength of the DRBG is 192 bits, according to NIST SP800-57, using the SHA-384 algorithm. In accordance with SP800-90, the DRBG is seeded with at least 888 bits of high quality entropy from entropy sources prior to any operation.
  
 This implementation uses the seed mechanism of the Java SecureRandom class for gathering entropy. This implementation performs self-tests at every execution, so that users can be confident that no library problems have affected operation. Two kinds of self-tests are performed:
