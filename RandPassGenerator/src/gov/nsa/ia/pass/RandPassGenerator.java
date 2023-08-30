@@ -418,9 +418,10 @@ public class RandPassGenerator {
      * @param wordlist URL to the wordlist to use, or null for default
      * @param maxWordLen maximum length of a word to use in the passphrase, <3 means use default
      * @param ruc random upcase the first ruc letters, 0 or positive
+	 * @param rruc random upcase the last rruc letters, 0 or positive
      * @return number of passphrases generated, or -1 on error.
      */
-    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen, int ruc) {
+    public int generatePassphrases(int count, int strength, URL wordlist, int maxWordLen, int ruc, int rruc) {
 	WordSet ws;
 	AbstractDRBG drbg;
 
@@ -430,6 +431,7 @@ public class RandPassGenerator {
 	    return -1;
 	}
 	if (ruc < 0) ruc = 0;
+	if (rruc < 0) rruc = 0;
 	
 	drbg = randman.getDRBG();
 	if (!(drbg.isOkay())) {
@@ -473,6 +475,16 @@ public class RandPassGenerator {
 		    wrd = ws.randomUpcase(s, ruc, drbg);
 		    if (wrd == null) {
 			logger.warning("RandPassGen - fatal error in trying to randomly upcase a word");
+			return -1;
+		    }
+			// if rruc <= 0 then this has no effect, we can randomly upcase both from the front and the back
+			// Debug - Original Below
+			// wrd = ws.reverseRandomUpcase(s, rruc, drbg);
+			// Debug - New below
+			wrd = ws.reverseRandomUpcase(wrd, rruc, drbg);
+		    
+		    if (wrd == null) {
+			logger.warning("RandPassGen - fatal error in trying to randomly reverse upcase a word");
 			return -1;
 		    }
 		    // add word to the passphrase
@@ -706,6 +718,7 @@ public class RandPassGenerator {
 	ret.addOption("decrypt", "Decrypt an encrypted key file using password", true, "-decrypt", null);
 	ret.addOption("enc", "Encrypt each key to a file using password (only for -k)", false, "-enc", null);
 	ret.addOption("randUpcase", "For passphrases, apply uppercase randomly to first N letters of each word", true, "-rcc", null);
+	ret.addOption("reverseRandUpcase", "For passphrases, apply uppercase randomly to last N letters of each word", true, "-rrcc", null);
 	return ret;
     }
 
@@ -763,6 +776,7 @@ public class RandPassGenerator {
 	String decryptFilePath = opt.getValue("decrypt");
 	boolean enc = opt.getValueAsBoolean("enc");
 	int randUpcase = opt.getValueAsInt("randUpcase");
+	int reverseRandUpcase = opt.getValueAsInt("reverseRandUpcase");
 
 	// check for something to do
 	if (decryptFilePath != null) {
@@ -855,6 +869,16 @@ public class RandPassGenerator {
 		    rpg.getLogger().info("Random upcase enabled for first " + randUpcase + " letters of passphrases");
 		}
 
+		// figure out if we are doing reverse random upcasing
+		if (reverseRandUpcase <= 0) {
+		    reverseRandUpcase = 0;
+		} else {
+		    if (verbose) {
+			System.err.println("Using reverse random upcase on last " + reverseRandUpcase + " letters.");
+		    }
+		    rpg.getLogger().info("Random upcase enabled for last " + reverseRandUpcase + " letters of passphrases");
+		}
+
 		// get the URL for the wordlist
 		URL ppURL = null;
 		if (ppurl != null && ppurl.length() > 0) {
@@ -864,7 +888,7 @@ public class RandPassGenerator {
 			rpg.getLogger().warning("RandPassGen - bad word list URL, exception: " + ue);
 		    }
 		}
-		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen, randUpcase);
+		cnt = rpg.generatePassphrases(numPassphrases, strength, ppURL, maxWordLen, randUpcase, reverseRandUpcase);
 		if (cnt <= 0) {
 		    rpg.message("Failed to generate passphrases");
 		    rpg.getLogger().warning("Tried to generate " + numPassphrases + " passphrases, but failed.");
