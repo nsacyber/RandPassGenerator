@@ -35,7 +35,7 @@ public class RandPassGenerator {
     /**
      * Version string
      */
-    public static final String VERSION = "RandPassGen 1.3.3 - 25 June 2022";
+    public static final String VERSION = "RandPassGen 1.3.4 - 2023-12-22";
 
     /**
      * Path of the default log file

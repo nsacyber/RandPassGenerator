@@ -141,3 +141,7 @@ CHANGES FROM  1.3.2  to  1.3.3
 * Improved efficiency of the WordSet random word generation process
 * Added the custom character set feature, -pwcustom
 
+CHANGES FROM  1.3.3  to  1.3.4
+* Increased the minimum word length for passphrases to 3 letters
+* Removed various unwanted words from the builtin wordlist
+* Stopped passing the Ant runtime to the Java compiler
