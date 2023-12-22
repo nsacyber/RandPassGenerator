@@ -63,7 +63,7 @@ public class RandPassGenerator {
     /**
      * Default min length for words in a passphrase
      */
-    public static final int MIN_WORD_LEN = 2;
+    public static final int MIN_WORD_LEN = 3;
 
     /**
      * Default separator string to use if employing chunk formatting

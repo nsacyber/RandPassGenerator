@@ -46,7 +46,7 @@ Unusual options:
   
 -pplen M  {When generating passphrases, longest word should be M letters long (minimum value of M is 3)}
 
--ppurl U  {Use the URL U to load words for passphrase (default: use internal list)}
+-ppurl U  {Use the URL U to load words for passphrase (default: use internal list).  Words must be at least 3 letters long.}
 
 -pwcs P   {Use character pattern P for characters to use in passwords (lowercase, uppercase, number, special character, or combination)}
 
