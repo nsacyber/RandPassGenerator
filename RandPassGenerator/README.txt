@@ -50,6 +50,8 @@ Unusual options:
 -sep S    For chunk formatting, use S as the separator (default: -)
 
 -rcc N    For passphrases, randomly upcase first N letters of each word (default: 0)
+
+-rrcc n   For passphrases, randomly upcase last N letters of each word (default: 0)
   
 At least one of the options -pw, -pp, or -k must be supplied.  The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file.  All messages are written to the standard error (stderr).  
 

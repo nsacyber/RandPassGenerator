@@ -62,6 +62,8 @@ Unusual options:
 
 -rcc N    {For passphrases - impose random camel-case; randomly uppercase the first N letters (default: 0)}
 
+-rrcc N   {For passphrases - impose random camel-case; randomly uppercase the last N letters (default: 0)}
+
 At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
 
 Detailed log messages are appended to the specified log file - if the log file cannot be opened, then the tool will not run. 

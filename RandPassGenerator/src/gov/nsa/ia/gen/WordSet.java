@@ -367,6 +367,43 @@ public class WordSet {
 	return wb.toString();
     }
 
+	/**
+     * Randomly upcase the last N letters of a provided word,
+     * drawing random from the given AbstractDRBG.  If N is greater
+     * than or equal to the length of the input string, then all the
+     * letters are potentially subject to uppercase.
+     *
+     * @param wrd A string composed of letters
+     * @param n How many of the letters to possibly upcase at probability 1/2
+     * @param drbg random source
+     * 
+     * @return a new string of same length with some letters possibly converted to uppercase
+     */
+    public String reverseRandomUpcase(String wrd, int n, AbstractDRBG drbg) {
+		if (n <= 0) return wrd;
+		
+		int len = wrd.length();
+		int y = len-n;			// Measuring from the end of the word, go back n letters, start Random Upcase at letters equal to y
+		Integer ri;
+		StringBuilder wb = new StringBuilder(len);
+	
+		for(int i = 0; i < len; i++) {
+            char c = wrd.charAt(i);
+            if (i >= y) {
+                ri = drbg.generateByte();
+                if (ri == null) {
+                    logger.warning("WordSet - generateByte returned null, drbg problem, cannot upcase.");
+                    return null;
+                }
+                if (ri.intValue() > 127) {
+                    c = Character.toUpperCase(c);
+                }
+            }
+            wb.append(c);   
+        }
+
+		return wb.toString();
+		}
 
     // TESTING
 
