@@ -1,6 +1,7 @@
 import hashlib
 import pytest
-from randpassgen.drbg import _pbi2ba, _hash_df
+from randpassgen.drbg import _pbi2ba, _hash_df, HashDRBG
+from randpassgen.entropy import collect_entropy, ENTROPY_GATE_BITS
 
 
 class TestPbi2ba:
@@ -49,3 +50,65 @@ class TestHashDf:
         r1 = _hash_df(b"input A", 256, 256)
         r2 = _hash_df(b"input B", 256, 256)
         assert r1 != r2
+
+
+class TestHashDRBGBasic:
+    def _make_drbg(self, strength: int = 192) -> HashDRBG:
+        drbg = HashDRBG(strength=strength, _skip_kat=True)
+        entropy = b'\x00' * (ENTROPY_GATE_BITS // 8)
+        nonce = b'\x00' * 16
+        drbg.instantiate(entropy, nonce)
+        return drbg
+
+    def test_not_instantiated_raises(self):
+        drbg = HashDRBG(strength=192, _skip_kat=True)
+        with pytest.raises(RuntimeError, match="not instantiated"):
+            drbg.generate(16)
+
+    def test_generate_returns_correct_length(self):
+        drbg = self._make_drbg()
+        assert len(drbg.generate(32)) == 32
+        assert len(drbg.generate(1)) == 1
+        assert len(drbg.generate(100)) == 100
+
+    def test_generate_is_nondeterministic_across_instances(self):
+        """Two DRBGs with different entropy produce different output."""
+        drbg1 = HashDRBG(strength=192, _skip_kat=True)
+        drbg1.instantiate(b'\x00' * 111, b'\x00' * 16)
+        drbg2 = HashDRBG(strength=192, _skip_kat=True)
+        drbg2.instantiate(b'\xff' * 111, b'\x00' * 16)
+        assert drbg1.generate(32) != drbg2.generate(32)
+
+    def test_reseed_counter_increments(self):
+        drbg = self._make_drbg()
+        assert drbg._reseed_counter == 1
+        drbg.generate(16)
+        assert drbg._reseed_counter == 2
+        drbg.generate(16)
+        assert drbg._reseed_counter == 3
+
+    def test_reseed_resets_counter(self):
+        drbg = self._make_drbg()
+        drbg.generate(16)
+        drbg.generate(16)
+        assert drbg._reseed_counter == 3
+        drbg.reseed(b'\xab' * 111)
+        assert drbg._reseed_counter == 1
+
+    def test_uninstantiate(self):
+        drbg = self._make_drbg()
+        drbg.uninstantiate()
+        assert not drbg.is_instantiated()
+        with pytest.raises(RuntimeError):
+            drbg.generate(16)
+
+    def test_strength_128_uses_sha256_seedlen_440(self):
+        drbg = HashDRBG(strength=128, _skip_kat=True)
+        drbg.instantiate(b'\x00' * 55, b'\x00' * 16)
+        assert drbg._seedlen == 55
+        assert drbg._hashbits == 256
+
+    def test_strength_192_uses_sha384_seedlen_888(self):
+        drbg = HashDRBG(strength=192, _skip_kat=True)
+        assert drbg._seedlen == 111
+        assert drbg._hashbits == 384
