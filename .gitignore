@@ -31,3 +31,11 @@ hs_err_pid*
 
 # Build artifacts
 /RandPassGenerator/build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+.eggs/
