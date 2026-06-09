@@ -164,6 +164,7 @@ class HashDRBG:
     def uninstantiate(self) -> None:
         self._V = 0
         self._C = 0
+        self._reseed_counter = 0
         self._instantiated = False
 
 

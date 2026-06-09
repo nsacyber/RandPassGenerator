@@ -97,8 +97,10 @@ class TestHashDRBGBasic:
 
     def test_uninstantiate(self):
         drbg = self._make_drbg()
+        drbg.generate(16)  # advance counter to 2
         drbg.uninstantiate()
         assert not drbg.is_instantiated()
+        assert drbg._reseed_counter == 0
         with pytest.raises(RuntimeError):
             drbg.generate(16)
 
