@@ -89,9 +89,6 @@ class WordSet:
         max_word_len: int = MAX_WORD_LEN,
         wordlist_path: Optional[str] = None,
     ) -> None:
-        self._min = min_word_len
-        self._max = max_word_len
-
         if wordlist_path:
             with open(wordlist_path, encoding="utf-8") as f:
                 lines = f.readlines()
@@ -107,11 +104,13 @@ class WordSet:
                 seen.add(word)
                 self._words.append(word)
 
+        self._words_set: set[str] = set(self._words)
+
     def size(self) -> int:
         return len(self._words)
 
     def contains(self, word: str) -> bool:
-        return word.lower() in set(self._words)
+        return word.lower() in self._words_set
 
     def bits_per_word(self) -> float:
         return math.log2(self.size())
