@@ -91,8 +91,6 @@ class WordSet:
     ) -> None:
         self._min = min_word_len
         self._max = max_word_len
-        self._buf: Optional[list[int]] = None
-        self._buf_idx: int = 0
 
         if wordlist_path:
             with open(wordlist_path, encoding="utf-8") as f:
@@ -118,35 +116,14 @@ class WordSet:
     def bits_per_word(self) -> float:
         return math.log2(self.size())
 
-    def _fill_buf(self, drbg: HashDRBG) -> None:
-        raw = drbg.generate_bytes(_BUFSIZE * 2)
-        self._buf = [(raw[i * 2] << 8 | raw[i * 2 + 1]) & 0x7FFF for i in range(_BUFSIZE)]
-        self._buf_idx = 0
-
     def _next_uniform_index(self, drbg: HashDRBG) -> int:
-        """Rejection-sample a uniform index into the word list."""
+        """Return a uniform random index into the word list via rejection sampling."""
         max_val = self.size()
-        # For large word lists, use 32-bit values (combining two 16-bit values)
-        if max_val > _RLIM_MAX:
-            max_32bit = 0x7FFFFFFF
-            rlim = (max_32bit // max_val) * max_val
-            while True:
-                if self._buf is None or self._buf_idx + 1 >= len(self._buf):
-                    self._fill_buf(drbg)
-                # Combine two 16-bit values into a 32-bit value
-                sval = (self._buf[self._buf_idx] << 16 | self._buf[self._buf_idx + 1]) & 0x7FFFFFFF
-                self._buf_idx += 2
-                if sval < rlim:
-                    return sval % max_val
-        else:
-            rlim = (_RLIM_MAX // max_val) * max_val
-            while True:
-                if self._buf is None or self._buf_idx >= len(self._buf):
-                    self._fill_buf(drbg)
-                sval = self._buf[self._buf_idx]
-                self._buf_idx += 1
-                if sval < rlim:
-                    return sval % max_val
+        rlim = (0xFFFFFFFF // max_val) * max_val
+        while True:
+            sval = int.from_bytes(drbg.generate_bytes(4), 'big')
+            if sval < rlim:
+                return sval % max_val
 
     @staticmethod
     def random_upcase(word: str, rcc: int, drbg: HashDRBG) -> str:
