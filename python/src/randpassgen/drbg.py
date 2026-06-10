@@ -186,5 +186,59 @@ def _run_known_answer_tests() -> None:
 
 
 def _perform_kat() -> bool:
-    """Placeholder — replaced in Task 5."""
-    return True
+    """Run the two NIST KAT vectors from HashDRBG.java initializeTests()."""
+    try:
+        _kat1()
+        _kat2()
+        return True
+    except AssertionError:
+        return False
+
+
+def _kat1() -> None:
+    """KAT-1: strength=128, SHA-256, seedlen=440 bits."""
+    drbg = HashDRBG(strength=128, _skip_kat=True)
+    drbg.instantiate(
+        bytes.fromhex("63363377e41e86468deb0ab4a8ed683f6a134e47e014c700454e81e95358a569"),
+        bytes.fromhex("808aa38f2a72a62359915a9f8a04ca68"),
+    )
+    assert drbg._V == int("32ab605ddc8d5651093b8a59bd9d3adea1249e21a69e2e4a3967515fa03ad41ccf5b126eb9f3b268080c952df88241fe4cc27bbcbbbed5", 16)
+    assert drbg._C == int("8ea2691d1915ebb4975593ca3fbad0ba137026d901a95950a207c41dc7773e15c1e85f4a5f91002866830bebe5c4ee1785b839323fbb44", 16)
+
+    drbg.reseed(bytes.fromhex("e62b8a8ee8f141b6980566e3bfe3c04903dad4ac2cdf9f2280010a6739bc83d3"))
+    assert drbg._V == int("59177d93843f0550f33933a51eb488168699ab9c85651536a61f7ec71e8b274a151f17e56becaf531dcfc955f2f1adb6536d51b256d53c", 16)
+
+    drbg.generate(128)  # discard generate-1 output (1024 bits = 128 bytes)
+    output = drbg.generate(128)
+    expected = bytes.fromhex(
+        "04eec63bb231df2c630a1afbe724949d005a587851e1aa795e477347c8b056621"
+        "c18bddcdd8d99fc5fc2b92053d8cfacfb0bb8831205fad1ddd6c071318a6018f0"
+        "3b73f5ede4d4d071f9de03fd7aea105d9299b8af99aa075bdb4db9aa28c18d174"
+        "b56ee2a014d098896ff2282c955a81969e069fa8ce007a180183a07dfae17"
+    )
+    assert output == expected
+
+
+def _kat2() -> None:
+    """KAT-2: strength=192, SHA-384, seedlen=888 bits."""
+    drbg = HashDRBG(strength=192, _skip_kat=True)
+    drbg.instantiate(
+        bytes.fromhex("2d3e072e78b3d5af2d60424b37a1ca56b24ad1b1fb27a9c327db0651cb75341c"),
+        bytes.fromhex("147d214920513cd539ce383f810d9551"),
+    )
+    assert drbg._V == int("bd9fe59036c728dbe30392569dedd9cca0cfaf9e7be20745e28e3a86615149caf4d970062c59b8f0ae7235f5d52762820ce6443cd313289d1c84e1b0e12ee992435008dc32904ea28fad4abfa00ff54adfb7186cb4d335b54ceff76b1992ae1ee3997054e76f88108783744324df96", 16)
+
+    drbg.reseed(bytes.fromhex("7597a56fdbaa0cb66cef235ccb6bbb423ef2a2f19e5a65a7b86dd11d0cee6cd4"))
+    assert drbg._V == int("fbcb667f386b611aadf6d76999427af0adeabae5b4b2898bf37a57554f6dbf0758b2095f4b4f06415c8a06f27773cf0f7e48b8c41eb5d7d4d48f628067c773f7ae0b9e24adaf4999b4330d73b0c9340f51b6e9e6f2e3f3d43fb8f4421349bc4e05c4e09202124b76c83b3ecf821f30", 16)
+
+    drbg.generate(192)  # discard generate-1 output (1536 bits = 192 bytes)
+    output = drbg.generate(192)
+    expected = bytes.fromhex(
+        "5d3d1c5ea9e8c219d43511288fc65dbc1a2f6284c59b26d4375f156b75d383d01"
+        "ac6773cad41bf5b6d9fc41416933c0459f9b6d481412e38e9dde34cec3529a313"
+        "d2e7815bc5c29a550dfd6be3365d0f8fbbe3a33bc07b6b96351834462a2e624d4"
+        "ffa0bd1bf9adda378f4ddb6d4f6a99f7e3fa2556e52006b40fe9caa30ff4cbed3"
+        "e574e2b3752680ce7117ab880dd3890be9c19f6442b0e2e04684e05f4fffd90f9"
+        "7112f0766a589ed82c07af7cba239c36a3d2bf52a25df2c84678556cedf"
+    )
+    assert output == expected
