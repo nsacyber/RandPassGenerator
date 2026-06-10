@@ -26,6 +26,25 @@ RandPassGenerator/               ← git repo root
 ├── LICENSE.md / DISCLAIMER.md / CONTRIBUTING.md
 ├── docs/
 │   └── PROJECT_OVERVIEW.md
+├── python/                      ← Python port (pip install -e .[dev])
+│   ├── pyproject.toml
+│   ├── README.md
+│   ├── tests/
+│   │   ├── test_drbg.py
+│   │   ├── test_generators.py
+│   │   ├── test_crypto.py
+│   │   ├── test_api.py
+│   │   └── test_cli.py
+│   └── src/randpassgen/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── drbg.py
+│       ├── entropy.py
+│       ├── generators.py
+│       ├── crypto.py
+│       ├── cli.py
+│       └── data/
+│           └── wordlist.txt
 └── RandPassGenerator/           ← Ant project root (run all ant commands here)
     ├── build.xml
     ├── BUILD.txt                ← canonical build + test instructions
@@ -74,6 +93,28 @@ java gov.nsa.ia.pass.RandManager
 
 > **Jar name:** `build.xml` outputs `PassGenerator.jar`. The file `README.txt` says `RandPassGenerator.jar` — that is a documentation error; the actual artifact is `PassGenerator.jar`.
 
+### Python (`python/`)
+
+```bash
+# Install in editable mode (run once after cloning)
+cd python && pip install -e .[dev]
+
+# Run tests
+cd python && pytest -v
+
+# Run a specific test file
+cd python && pytest tests/test_drbg.py -v
+
+# Run the CLI
+randpassgen -pw 3
+randpassgen --help
+
+# Build wheel
+cd python && pip install hatchling && python -m hatchling build
+```
+
+> **Runtime self-tests are mandatory.** `HashDRBG` runs NIST known-answer tests on first instantiation per process. `RuntimeError` is raised if they fail — this is expected behavior, not a bug.
+
 ---
 
 ## Code Conventions
@@ -83,6 +124,8 @@ java gov.nsa.ia.pass.RandManager
 - **Error handling:** Generation-path methods return `-1` or `null` on failure rather than throwing. Reserve exceptions for truly exceptional conditions. Log failures at `WARNING` or `SEVERE` via `java.util.logging`.
 - **Logging:** Use `java.util.logging.Logger`. Log at `FINE` for trace-level, `INFO` for normal events, `WARNING`/`SEVERE` for failures.
 - **Never log secret material:** Key values, DRBG seed/entropy bytes, and raw random output must never appear in any log file — not even at `FINE` level.
+
+**Python:** `snake_case` for functions, methods, and variables; `PascalCase` for classes; `UPPER_SNAKE_CASE` for constants; `_` prefix for private helpers. Type hints on all public functions. No public API should expose DRBG state or internal implementation details.
 
 ---
 
@@ -138,6 +181,8 @@ Defined in `RandManager.java`:
 
 ---
 
-## Migration Note
+## Python Implementation
 
-The active branch is `jerdog/migrate2Python`. A Java → Python port is planned but **has not started**. The Java codebase described above is the reference implementation. No Python source files, build tooling, or test framework have been defined yet — do not assume any Python project structure exists.
+The `python/` directory contains a full Python port of RandPassGenerator. It is installed with `pip install -e .[dev]` from the `python/` directory. See `python/README.md` for usage.
+
+The Java codebase at `RandPassGenerator/` remains the authoritative reference. The Python port matches Java's behavior exactly, including DRBG state machine, KAT vectors, rejection sampling, AES Key Wrap parameters, and Key ID scheme.

@@ -219,6 +219,49 @@ No external Java libraries. Everything is standard JDK.
 
 ---
 
-## Migration Status
+## Python Implementation
 
-The branch `jerdog/migrate2Python` is the starting point for a future **Java → Python port**. As of this writing, the branch contains only the original Java source — no Python code, build files, or tests have been written yet. The Java implementation described in this document is the **authoritative reference specification** for the migration.
+A complete Python port lives in `python/`. It is installable via `pip install randpassgen` and provides both a `randpassgen` CLI (compatible with all Java flags) and an importable library.
+
+### Python Module Architecture
+
+| Module | Role |
+|---|---|
+| `entropy.py` | `collect_entropy(num_bits)` — wraps `os.urandom` with ≥888-bit gate |
+| `drbg.py` | `HashDRBG` — NIST SP800-90A Hash DRBG (SHA-384); NIST KATs on first instantiation |
+| `generators.py` | `CharacterSet`, `WordSet`, `HexKeyGen` — direct ports of the Java generator classes |
+| `crypto.py` | `wrap_key` / `unwrap_key` — AES Key Wrap + PBKDF2-HMAC-SHA512 via `cryptography` (PyCA) |
+| `cli.py` | `argparse`-based CLI; mirrors all 16 Java flags |
+| `__init__.py` | Public library API: `generate_password()`, `generate_passphrase()`, `generate_key()` |
+
+### Python Testing
+
+71 tests covering NIST known-answer vectors, generator uniformity, AES Key Wrap round-trips, and CLI integration. Run:
+
+```bash
+cd python && pip install -e .[dev] && pytest -v
+```
+
+### Python Repository Layout
+
+```text
+python/
+├── pyproject.toml             ← hatchling build config; version 1.4.0
+├── README.md
+├── tests/
+│   ├── test_drbg.py           ← NIST SP800-90A KAT vectors
+│   ├── test_generators.py     ← CharacterSet, WordSet, HexKeyGen
+│   ├── test_crypto.py         ← AES Key Wrap round-trips
+│   ├── test_api.py            ← public library API
+│   └── test_cli.py            ← CLI subprocess integration
+└── src/randpassgen/
+    ├── __init__.py            ← public API
+    ├── __main__.py            ← enables python -m randpassgen
+    ├── drbg.py
+    ├── entropy.py
+    ├── generators.py
+    ├── crypto.py
+    ├── cli.py
+    └── data/
+        └── wordlist.txt       ← copy of RandPassGenerator/data/wordlist.txt
+```

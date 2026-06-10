@@ -129,6 +129,18 @@ bits-per-character, and password length is then computed to meet or exceed the r
 
 The RandPassGenerator tool performs extensive logging. By default, log entries are appended to the local file "randpass.log". No actual key data, random data, or seed data is written to the log file.
 
+## Python
+
+A full-featured Python port is available at [`python/`](python/):
+
+```bash
+cd python
+pip install -e .[dev]
+randpassgen -pw 3
+```
+
+See [`python/README.md`](python/README.md) for full documentation.
+
 ## License
 
 See [LICENSE](./LICENSE.md).
