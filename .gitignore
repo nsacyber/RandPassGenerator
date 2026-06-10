@@ -39,3 +39,6 @@ __pycache__/
 *.egg-info/
 dist/
 .eggs/
+.coverage
+.coverage.*
+htmlcov/
