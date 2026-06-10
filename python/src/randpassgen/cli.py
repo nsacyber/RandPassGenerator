@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from randpassgen.drbg import HashDRBG
@@ -124,8 +123,8 @@ def main() -> None:
         # Keys
         if args.k:
             key_log = logging.getLogger("randpassgen.keys")
-            key_handler = logging.FileHandler("randpassGenKeys.log")
-            key_log.addHandler(key_handler)
+            if not key_log.handlers:
+                key_log.addHandler(logging.FileHandler("randpassGenKeys.log"))
 
             for _ in range(args.k):
                 key_hex = HexKeyGen.generate_key(args.str, drbg)
