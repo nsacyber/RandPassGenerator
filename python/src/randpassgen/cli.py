@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Optional
 
 from randpassgen.drbg import HashDRBG
 from randpassgen.entropy import collect_entropy, ENTROPY_GATE_BITS
@@ -92,7 +91,7 @@ def main() -> None:
             return
 
         drbg = _setup_drbg()
-        log.info("DRBG instantiated at strength %d", args.str)
+        log.info("DRBG instantiated (internal SHA-384 strength=192); output strength=%d", args.str)
 
         # Passwords
         if args.pw:
