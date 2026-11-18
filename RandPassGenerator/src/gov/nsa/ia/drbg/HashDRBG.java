@@ -163,7 +163,11 @@ public class HashDRBG extends AbstractDRBG {
 			ret = this.reseed(additionalInput);
 			if (ret != STATUS_SUCCESS) {
 				logWarning("returning from generate with error because required reseed failed");
+				return ret;
 			}
+			// SP800-90A section 9.3.1 step 7.4: the reseed consumed the
+			// additional input, so it must not be used again in step 2
+			additionalInput = null;
 		} 
 
 		// step 2
@@ -173,7 +177,7 @@ public class HashDRBG extends AbstractDRBG {
 					return STATUS_ERROR;
 				}
 				if (h.update((byte)0x02) != STATUS_SUCCESS ||
-					h.update(pbi2ba(v)) != STATUS_SUCCESS ||
+					h.update(seedlenBytes(v)) != STATUS_SUCCESS ||
 					h.update(additionalInput) != STATUS_SUCCESS) {
 					logWarning("returning from generate with error because hashing failed");
 					return STATUS_ERROR;					
@@ -202,7 +206,7 @@ public class HashDRBG extends AbstractDRBG {
 
 		// step 5
 		if (h.update((byte)0x03) != STATUS_SUCCESS ||
-			h.update(pbi2ba(v)) != STATUS_SUCCESS) {
+			h.update(seedlenBytes(v)) != STATUS_SUCCESS) {
 			logWarning("returning from generate with error because hashing failed");
 			return STATUS_ERROR;					
 		}
@@ -224,6 +228,22 @@ public class HashDRBG extends AbstractDRBG {
 	}
 	
 	/**
+	 * Return a state value (V, or V+i inside Hashgen) as the seedlen-bit
+	 * string that SP800-90A section 10.1.1 hashes.  pbi2ba() drops leading
+	 * zero bytes, which changed the hash input (and so the output) whenever
+	 * the top byte of V was zero, about one time in 256.
+	 *
+	 * @param x non-negative value less than 2^seedlen
+	 * @return x as a big-endian byte array exactly seedlen/8 bytes long
+	 */
+	private byte [] seedlenBytes(BigInteger x) {
+		byte [] mag = pbi2ba(x);
+		byte [] ret = new byte[seedlen / 8];
+		System.arraycopy(mag, 0, ret, ret.length - mag.length, mag.length);
+		return ret;
+	}
+
+	/**
 	 * Implementation of Hashgen function from SP800-90 section 10.1.1.4
 	 * @param numBytes number of output bytes requested
 	 * @param output output buffer, must be at least numBytes long, at most numBytes bytes will be written into this buffer
@@ -242,7 +262,7 @@ public class HashDRBG extends AbstractDRBG {
 		tmpbuf = new byte[h.getDigestSize()];
 		for(i = 0; i < m; i++) {
 			if (h.reset() != STATUS_SUCCESS) return STATUS_ERROR;					
-			byte [] databuf = pbi2ba(data);
+			byte [] databuf = seedlenBytes(data);
 			if (h.update(databuf) != STATUS_SUCCESS) return STATUS_ERROR;
 			if (h.getDigest(tmpbuf) != STATUS_SUCCESS) return STATUS_ERROR;
 
@@ -477,7 +497,7 @@ public class HashDRBG extends AbstractDRBG {
 		try {
 			acc.write((byte)0x01);
 			// acc.write(v.toByteArray());
-			acc.write(pbi2ba(v));
+			acc.write(seedlenBytes(v));
 			acc.write(ent);
 			if (additionalInput != null && additionalInput.length > 0) {
 				acc.write(additionalInput);
