@@ -202,7 +202,12 @@ public class RandPassGenerator {
 		    startmessage("Random generation manager self-tests passed.");
 		} else {
 		    System.err.println("Randomness self-test failed.  Exiting.");
+		    die = true;
 		}
+	    } else {
+		logger.severe("RandPassGen - random generation manager failed to initialize.");
+		message("Random generation manager failed to initialize.  Exiting.");
+		die = true;
 	    }
 
 	}
